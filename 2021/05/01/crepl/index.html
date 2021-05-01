@@ -20,7 +20,7 @@
 
 <script class="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"ysln.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.3.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.3.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}};
   </script>
 <meta name="description" content="很多现代编程语言都提供了交互式的REPL, 比如Python. 在REPL中, 除了进行简单的数值计算外(类似计算器), 还可以动态创建函数, 并在之后调用它. 基于”解释执行”的程序设计语言(包括shell本身)天生就具有这种交互式的工作模式. 这个实验的目的是使用C语言实现一个简易的REPL. 最终效果如下:   这个技术和现代虚拟机中的即时编译 (just-in-time) 技术是非常相关的">
 <meta property="og:type" content="article">
@@ -177,29 +177,6 @@
           <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
   <p class="site-author-name" itemprop="name">yl.chen</p>
   <div class="site-description" itemprop="description"></div>
-</div>
-<div class="site-state-wrap site-overview-item animated">
-  <nav class="site-state">
-      <div class="site-state-item site-state-posts">
-          <a href="/archives/">
-        
-          <span class="site-state-item-count">2</span>
-          <span class="site-state-item-name">posts</span>
-        </a>
-      </div>
-      <div class="site-state-item site-state-categories">
-            <a href="/categories/">
-          
-        <span class="site-state-item-count">1</span>
-        <span class="site-state-item-name">categories</span></a>
-      </div>
-      <div class="site-state-item site-state-tags">
-            <a href="/tags/">
-          
-        <span class="site-state-item-count">3</span>
-        <span class="site-state-item-name">tags</span></a>
-      </div>
-  </nav>
 </div>
   <div class="links-of-author site-overview-item animated">
       <span class="links-of-author-item">
