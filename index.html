@@ -298,7 +298,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2021-05-01 15:11:46 / Modified: 15:52:43" itemprop="dateCreated datePublished" datetime="2021-05-01T15:11:46+08:00">2021-05-01</time>
+      <time title="Created: 2021-05-01 15:11:46 / Modified: 16:31:06" itemprop="dateCreated datePublished" datetime="2021-05-01T15:11:46+08:00">2021-05-01</time>
     </span>
 
   
@@ -315,6 +315,7 @@
 <p>这个实验的目的是使用C语言实现一个简易的REPL. 最终效果如下:</p>
 <img src="crepl\image-20210501112153656.png" alt="image-20210501112153656" style="zoom: 67%;" />
 
+<p><img src="/2021/05/01/crepl/image-20210501112153656.png"></p>
 <p><em><strong>这个技术和现代虚拟机中的即时编译 (just-in-time) 技术是非常相关的：在程序运行时 (而非程序执行前) 进行编译，并将编译得到的二进制代码 (指令/数据) 动态加载。</strong></em> — 摘自<a target="_blank" rel="noopener" href="http://jyywiki.cn/OS/2021/labs/M4">jyy的实验指南</a>.</p>
 <h2 id="分析"><a href="#分析" class="headerlink" title="分析"></a>分析</h2><p>C语言是一种编译型的语言, 源文件到二进制文件需要经过编译和链接(link)两个过程. 链接主要完成的工作是<strong>符号解析</strong>和<strong>重定位</strong>. </p>
 <p>如果是静态链接的程序(<code>-static</code>), 类型为<code>Executable file(EXEC)</code>, 即<strong>可执行文件</strong>. 程序中的所有符号都是被完全解析的, 比如所有函数符号的地址都是确定的, 可以直接调用.</p>
