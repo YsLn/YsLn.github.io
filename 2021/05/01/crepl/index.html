@@ -22,28 +22,40 @@
     var NexT = window.NexT || {};
     var CONFIG = {"hostname":"ysln.github.io","root":"/project/","images":"/project/images","scheme":"Gemini","version":"8.3.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}};
   </script>
-<meta property="og:type" content="website">
-<meta property="og:title" content="cyl&#39;s blog">
-<meta property="og:url" content="https://ysln.github.io/project/index.html">
+<meta name="description" content="很多现代编程语言都提供了交互式的REPL, 比如Python. 在REPL中, 除了进行简单的数值计算外(类似计算器), 还可以动态创建函数, 并在之后调用它. 基于”解释执行”的程序设计语言(包括shell本身)天生就具有这种交互式的工作模式. 这个实验的目的是使用C语言实现一个简易的REPL. 最终效果如下:   这个技术和现代虚拟机中的即时编译 (just-in-time) 技术是非常相关的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="C语言实现Real-Eval-Print-Loop (REPL)">
+<meta property="og:url" content="https://ysln.github.io/project/2021/05/01/crepl/index.html">
 <meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="很多现代编程语言都提供了交互式的REPL, 比如Python. 在REPL中, 除了进行简单的数值计算外(类似计算器), 还可以动态创建函数, 并在之后调用它. 基于”解释执行”的程序设计语言(包括shell本身)天生就具有这种交互式的工作模式. 这个实验的目的是使用C语言实现一个简易的REPL. 最终效果如下:   这个技术和现代虚拟机中的即时编译 (just-in-time) 技术是非常相关的">
 <meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/project/2021/05/01/crepl/crepl/image-20210501112153656.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501122331359.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501130905417.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501131258559.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501132200769.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501132529794.png">
+<meta property="og:image" content="h:/hexo/source/_posts/crepl/image-20210501132836648.png">
+<meta property="article:published_time" content="2021-05-01T07:11:46.598Z">
+<meta property="article:modified_time" content="2021-05-01T07:52:43.207Z">
 <meta property="article:author" content="yl.chen">
 <meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/project/2021/05/01/crepl/crepl/image-20210501112153656.png">
 
 
-<link rel="canonical" href="https://ysln.github.io/project/">
+<link rel="canonical" href="https://ysln.github.io/project/2021/05/01/crepl/">
 
 
 <script class="page-configurations">
   // https://hexo.io/docs/variables.html
   CONFIG.page = {
     sidebar: "",
-    isHome : true,
-    isPost : false,
+    isHome : false,
+    isPost : true,
     lang   : 'en'
   };
 </script>
-<title>cyl's blog</title>
+<title>C语言实现Real-Eval-Print-Loop (REPL) | cyl's blog</title>
   
 
 
@@ -140,7 +152,7 @@
 
   <aside class="sidebar">
 
-    <div class="sidebar-inner sidebar-overview-active">
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
       <ul class="sidebar-nav">
         <li class="sidebar-nav-toc">
           Table of Contents
@@ -153,6 +165,7 @@
       <div class="sidebar-panel-container">
         <!--noindex-->
         <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E6%9E%90"><span class="nav-number">1.</span> <span class="nav-text">分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">2.1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD"><span class="nav-number">2.2.</span> <span class="nav-text">加载</span></a></li></ol></li></ol></div>
         </div>
         <!--/noindex-->
 
@@ -200,79 +213,17 @@
 </noscript>
 
 
-    <div class="main-inner index posts-expand">
+    <div class="main-inner post posts-expand">
 
-    
+
+  
 
 
 <div class="post-block">
   
   
 
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/project/2021/05/01/hello/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/project/images/avatar.gif">
-      <meta itemprop="name" content="yl.chen">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cyl's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/project/2021/05/01/hello/" class="post-title-link" itemprop="url">hello</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2021-05-01 15:41:10" itemprop="dateCreated datePublished" datetime="2021-05-01T15:41:10+08:00">2021-05-01</time>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
     <link itemprop="mainEntityOfPage" href="https://ysln.github.io/project/2021/05/01/crepl/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -285,9 +236,9 @@
       <meta itemprop="name" content="cyl's blog">
     </span>
       <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/project/2021/05/01/crepl/" class="post-title-link" itemprop="url">C语言实现Real-Eval-Print-Loop (REPL)</a>
-        </h2>
+        <h1 class="post-title" itemprop="name headline">
+          C语言实现Real-Eval-Print-Loop (REPL)
+        </h1>
 
         <div class="post-meta-container">
           <div class="post-meta">
@@ -311,7 +262,7 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <p>很多现代编程语言都提供了交互式的REPL, 比如Python. 在REPL中, 除了进行简单的数值计算外(类似计算器), 还可以动态创建函数, 并在之后调用它. 基于”解释执行”的程序设计语言(包括shell本身)天生就具有这种交互式的工作模式.</p>
+        <p>很多现代编程语言都提供了交互式的REPL, 比如Python. 在REPL中, 除了进行简单的数值计算外(类似计算器), 还可以动态创建函数, 并在之后调用它. 基于”解释执行”的程序设计语言(包括shell本身)天生就具有这种交互式的工作模式.</p>
 <p>这个实验的目的是使用C语言实现一个简易的REPL. 最终效果如下:</p>
 <img src="crepl\image-20210501112153656.png" alt="image-20210501112153656" style="zoom: 67%;" />
 
@@ -364,7 +315,6 @@
 </li>
 </ul>
 
-      
     </div>
 
     
@@ -372,11 +322,22 @@
     
 
     <footer class="post-footer">
-        <div class="post-eof"></div>
-      
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/project/2021/05/01/hello/" rel="next" title="hello">
+                  hello <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
     </footer>
   </article>
 </div>
+
 
 
 
