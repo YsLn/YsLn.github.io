@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://ysln.github.io/2021/05/04/threads-on-multi-CPU/</loc>
+    
+    <lastmod>2021-05-04</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://ysln.github.io/2021/05/01/crepl/</loc>
     
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
     
   </url>
   
@@ -22,17 +29,10 @@
     
   </url>
   
-  <url>
-    <loc>https://ysln.github.io/2021/05/01/hello/</loc>
-    
-    <lastmod>2021-05-01</lastmod>
-    
-  </url>
-  
 
   <url>
     <loc>https://ysln.github.io/</loc>
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
@@ -40,21 +40,42 @@
   
   <url>
     <loc>https://ysln.github.io/tags/C/</loc>
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://ysln.github.io/tags/REPL/</loc>
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
   
   <url>
     <loc>https://ysln.github.io/tags/%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5/</loc>
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/OS/</loc>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/thread/</loc>
+    <lastmod>2021-05-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/hart/</loc>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
@@ -63,7 +84,7 @@
   
   <url>
     <loc>https://ysln.github.io/categories/NJU-OS-Lab/</loc>
-    <lastmod>2021-05-01</lastmod>
+    <lastmod>2021-05-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
   </url>
