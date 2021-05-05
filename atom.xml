@@ -43,9 +43,9 @@
     
     <category term="C" scheme="https://ysln.github.io/tags/C/"/>
     
-    <category term="OS" scheme="https://ysln.github.io/tags/OS/"/>
-    
     <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
+    
+    <category term="OS" scheme="https://ysln.github.io/tags/OS/"/>
     
     <category term="hart" scheme="https://ysln.github.io/tags/hart/"/>
     
@@ -107,9 +107,9 @@
     
     <category term="C" scheme="https://ysln.github.io/tags/C/"/>
     
-    <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
-    
     <category term="mutex&amp;futex" scheme="https://ysln.github.io/tags/mutex-futex/"/>
+    
+    <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
     
     <category term="gdb" scheme="https://ysln.github.io/tags/gdb/"/>
     
