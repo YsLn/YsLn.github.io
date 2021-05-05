@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>https://ysln.github.io/2021/05/05/hello/</loc>
+    
+    <lastmod>2021-05-05</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>https://ysln.github.io/2021/05/05/threads-on-multi-CPU/</loc>
     
     <lastmod>2021-05-05</lastmod>
@@ -67,7 +74,7 @@
   </url>
   
   <url>
-    <loc>https://ysln.github.io/tags/OS/</loc>
+    <loc>https://ysln.github.io/tags/mutex-futex/</loc>
     <lastmod>2021-05-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -75,20 +82,6 @@
   
   <url>
     <loc>https://ysln.github.io/tags/thread/</loc>
-    <lastmod>2021-05-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://ysln.github.io/tags/hart/</loc>
-    <lastmod>2021-05-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://ysln.github.io/tags/mutex-futex/</loc>
     <lastmod>2021-05-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -103,6 +96,20 @@
   
   <url>
     <loc>https://ysln.github.io/tags/%E8%B0%83%E8%AF%95/</loc>
+    <lastmod>2021-05-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/OS/</loc>
+    <lastmod>2021-05-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/hart/</loc>
     <lastmod>2021-05-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>

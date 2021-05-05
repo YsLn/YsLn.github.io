@@ -6,7 +6,7 @@
   <link href="https://ysln.github.io/atom.xml" rel="self"/>
   
   <link href="https://ysln.github.io/"/>
-  <updated>2021-05-05T02:14:07.066Z</updated>
+  <updated>2021-05-05T02:52:03.609Z</updated>
   <id>https://ysln.github.io/</id>
   
   <author>
@@ -15,6 +15,19 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title></title>
+    <link href="https://ysln.github.io/2021/05/05/hello/"/>
+    <id>https://ysln.github.io/2021/05/05/hello/</id>
+    <published>2021-05-05T02:52:03.609Z</published>
+    <updated>2021-05-05T02:52:03.609Z</updated>
+    
+    
+    
+    
+    
+  </entry>
   
   <entry>
     <title>spinlock &amp; mutex &amp; futex</title>
@@ -41,9 +54,9 @@
     
     <category term="C" scheme="https://ysln.github.io/tags/C/"/>
     
-    <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
-    
     <category term="mutex&amp;futex" scheme="https://ysln.github.io/tags/mutex-futex/"/>
+    
+    <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
     
     <category term="gdb" scheme="https://ysln.github.io/tags/gdb/"/>
     
@@ -78,9 +91,9 @@
     
     <category term="C" scheme="https://ysln.github.io/tags/C/"/>
     
-    <category term="OS" scheme="https://ysln.github.io/tags/OS/"/>
-    
     <category term="thread" scheme="https://ysln.github.io/tags/thread/"/>
+    
+    <category term="OS" scheme="https://ysln.github.io/tags/OS/"/>
     
     <category term="hart" scheme="https://ysln.github.io/tags/hart/"/>
     
