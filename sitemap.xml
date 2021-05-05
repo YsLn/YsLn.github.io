@@ -2,14 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>https://ysln.github.io/2021/05/05/hello/</loc>
-    
-    <lastmod>2021-05-05</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>https://ysln.github.io/2021/05/05/threads-on-multi-CPU/</loc>
+    <loc>https://ysln.github.io/2021/05/01/crepl/</loc>
     
     <lastmod>2021-05-05</lastmod>
     
@@ -23,7 +16,7 @@
   </url>
   
   <url>
-    <loc>https://ysln.github.io/2021/05/01/crepl/</loc>
+    <loc>https://ysln.github.io/2021/05/05/threads-on-multi-CPU/</loc>
     
     <lastmod>2021-05-05</lastmod>
     
@@ -60,20 +53,6 @@
   </url>
   
   <url>
-    <loc>https://ysln.github.io/tags/REPL/</loc>
-    <lastmod>2021-05-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>https://ysln.github.io/tags/%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5/</loc>
-    <lastmod>2021-05-05</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
     <loc>https://ysln.github.io/tags/mutex-futex/</loc>
     <lastmod>2021-05-05</lastmod>
     <changefreq>daily</changefreq>
@@ -96,6 +75,20 @@
   
   <url>
     <loc>https://ysln.github.io/tags/%E8%B0%83%E8%AF%95/</loc>
+    <lastmod>2021-05-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/REPL/</loc>
+    <lastmod>2021-05-05</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>https://ysln.github.io/tags/%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5/</loc>
     <lastmod>2021-05-05</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
