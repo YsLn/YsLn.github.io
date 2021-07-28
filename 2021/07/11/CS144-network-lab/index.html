@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Sans Serif:300,300italic,400,400italic,700,700italic|Serif:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Fira Code:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="本文是在完成 斯坦福大学 CS144课程实验 过程中的一些记录.   这个实验我做的不是很好, 只是为了做实验, 而没有去看老师的上课视频, 也没有重新去看 计算机网络-自顶向下方法 这本书. 这本书当时看了一半就放在一旁, 吃了一年的灰. 并且做实验也有点是面向测试用例的感觉, 并没有仔细的思考 TCP的原理.   课程目标: 实现 Internet中的几个重要的部分:  TCP协议. 重点.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CS144 Lab Assignments 实验笔记">
+<meta property="og:url" content="https://ysln.github.io/2021/07/11/CS144-network-lab/index.html">
+<meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="本文是在完成 斯坦福大学 CS144课程实验 过程中的一些记录.   这个实验我做的不是很好, 只是为了做实验, 而没有去看老师的上课视频, 也没有重新去看 计算机网络-自顶向下方法 这本书. 这本书当时看了一半就放在一旁, 吃了一年的灰. 并且做实验也有点是面向测试用例的感觉, 并没有仔细的思考 TCP的原理.   课程目标: 实现 Internet中的几个重要的部分:  TCP协议. 重点.">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210628220658616.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626183256880.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626183501427.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626192056124.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626193318753.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626193726343.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626211803871.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626215417102.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626211803871.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626215417102.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210620161545407.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626232831255.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627000339211.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627001115952.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627004921821.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210626211803871.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210620161647505.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627023248631.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/1608954-20200914214818554-10014625.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627024828072.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627030653507.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/1608954-20200914214827124-2104730079.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627034401032.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627034630990.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627035513212.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627040111623.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210627040217121.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210728204548324.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210628230855985.png">
+<meta property="article:published_time" content="2021-07-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-28T14:24:05.217Z">
+<meta property="article:author" content="yl.chen">
+<meta property="article:tag" content="modern C++">
+<meta property="article:tag" content="TCP">
+<meta property="article:tag" content="计算机网络">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/2021/07/11/CS144-network-lab/image-20210628220658616.png">
+
+<link rel="canonical" href="https://ysln.github.io/2021/07/11/CS144-network-lab/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>CS144 Lab Assignments 实验笔记 | cyl's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">cyl's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/07/11/CS144-network-lab/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CS144 Lab Assignments 实验笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-07-11 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-11T00:00:00+08:00">2021-07-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-07-28 22:24:05" itemprop="dateModified" datetime="2021-07-28T22:24:05+08:00">2021-07-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CS144-Network-Lab/" itemprop="url" rel="index"><span itemprop="name">CS144 Network Lab</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文是在完成 <strong><a target="_blank" rel="noopener" href="https://cs144.github.io/">斯坦福大学 CS144课程实验</a></strong> 过程中的一些记录.</p>
+</blockquote>
+<blockquote>
+<p>这个实验我做的不是很好, 只是为了做实验, 而没有去看老师的上课视频, 也没有重新去看 <strong>计算机网络-自顶向下方法</strong> 这本书. <em>这本书当时看了一半就放在一旁, 吃了一年的灰.</em> 并且做实验也有点是面向测试用例的感觉, 并没有仔细的思考 TCP的原理. </p>
+</blockquote>
+<p>课程目标: 实现 Internet中的几个重要的部分:</p>
+<ul>
+<li><strong>TCP协议</strong>. 重点.</li>
+<li>network interface.</li>
+<li>router.</li>
+</ul>
+<p>课程要求: 使用 modern C++.</p>
+<p><img src="/2021/07/11/CS144-network-lab/image-20210628220658616.png" alt="image-20210628220658616"></p>
+<blockquote>
+<p>这门课程总共有7个实验, 后面的实验会用到前面的实验已经实现好的功能. Lab 0-4是重点和难点, 实现 TCP协议. Lab 5-6相对就更简单些, 实现底层的 network interface和 router.</p>
+<p>完成全部实验大概花了一个月左右的时间, 98%的时间都花在了 Lab 0-4上, 中间有一段时间调试到自闭.</p>
+</blockquote>
+<h2 id="Lab-0-networking-warmup"><a href="#Lab-0-networking-warmup" class="headerlink" title="Lab 0: networking warmup"></a>Lab 0: networking warmup</h2><h3 id="任务1-webget"><a href="#任务1-webget" class="headerlink" title="任务1: webget"></a>任务1: webget</h3><p>使用 <code>HTTP GET</code>从服务器获取 Web 页面. <code>TCPSocket</code>是一个对操作系统提供的TCP socket的 wrapper.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">get_URL</span><span class="params">(<span class="keyword">const</span> string &amp;host, <span class="keyword">const</span> string &amp;path)</span> </span>&#123;</span><br><span class="line">    TCPSocket sock&#123;&#125;;</span><br><span class="line">    sock.<span class="built_in">connect</span>(Address&#123;host, <span class="string">&quot;http&quot;</span>&#125;);</span><br><span class="line">    sock.<span class="built_in">write</span>(<span class="string">&quot;GET &quot;</span> + path + <span class="string">&quot; HTTP/1.1\r\n&quot;</span> + <span class="string">&quot;Host: &quot;</span> + host + <span class="string">&quot;\r\n\r\n&quot;</span>);</span><br><span class="line">    sock.<span class="built_in">shutdown</span>(SHUT_WR);  <span class="comment">// important!!!</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!sock.<span class="built_in">eof</span>()) &#123;</span><br><span class="line">        cout &lt;&lt; sock.<span class="built_in">read</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">//while (true) &#123;</span></span><br><span class="line">    <span class="comment">//    auto recvd = sock.read();</span></span><br><span class="line">    <span class="comment">//    if (recvd.size() == 0) break;</span></span><br><span class="line">    <span class="comment">//    cout &lt;&lt; recvd;</span></span><br><span class="line">    <span class="comment">//&#125;</span></span><br><span class="line"></span><br><span class="line">    sock.<span class="built_in">close</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是, socket表示的是双向的数据流. 在这里, 当发送完 GET请求之后, 就不需要再发送数据了, 而只是接受服务器的响应数据. 因此, 可以关闭 socket的写端 <code>sock.shutdown(SHUT_WR);</code>. 如果去掉这句, 则需要等待大约30秒才会跳出 <code>while</code>循环.</p>
+<h3 id="任务2-An-in-memory-reliable-byte-stream"><a href="#任务2-An-in-memory-reliable-byte-stream" class="headerlink" title="任务2: An in-memory reliable byte stream"></a>任务2: An in-memory reliable byte stream</h3><p>实现 <code>ByteStream</code>, 它是一个字节流, 可以往一端写, 从另一端读. <strong>字节流是有限容量的, 但它同时又是”无穷的”</strong>: 即使字节流的容量为1个字节, 只要用户从读端取走数据, 则用户又可以从写端写数据, 直到用户主动终止输入 <code>end_input</code>或者发生某种错误 <code>set_error</code>.</p>
+<p>一开始我使用 <code>std::deque&lt;char&gt;</code>作为 <code>ByteStream</code>的内部存储容器. 最终完成Lab4之后, 测试TCP的性能, 吞吐量能达到 1.7Gbit/s.</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626183256880.png" alt="image-20210626183256880" style="zoom:80%;">
+
+<p><a target="_blank" rel="noopener" href="https://cs144.github.io/assignments/lab4.pdf">讲义</a>上的参考数据如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626183501427.png" alt="image-20210626183501427" style="zoom:80%;">
+
+<p>我的实现似乎也还行. 之后看<a target="_blank" rel="noopener" href="https://www.cnblogs.com/kangyupl/p/stanford_cs144_labs.html">网上的一些资料</a>时, 发现可以使用 <code>BufferList</code>类来作为<code>ByteStream</code>的容器, 从而优化 TCP的性能.</p>
+<p><code>BufferList</code>的内部使用 <code>std::deque&lt;Buffer&gt;</code>作为容器. <code>Buffer</code>是一种<strong>引用计数的只读的</strong>字符串, <strong>可以从头部丢弃字符</strong>, 类似于<code>std::string_view</code>, 也类似于 Rust的切片 <code>slice</code>.</p>
+<p>从 <code>ByteStream</code>的读端读取数据时, 需要把其内部容器的头部移除字符. 而 <code>Buffer</code>从头部丢弃字符是一个非常廉价的操作, 可以在常数时间内完成. </p>
+<p>使用 <code>std::deque&lt;char&gt;</code>, 用 gprof分析 tcp_benchmark的数据如下:</p>
+<blockquote>
+<p>要想使用 gprof分析程序, 需要添加 <code>-pg</code>编译选项.</p>
+</blockquote>
+<p><img src="/2021/07/11/CS144-network-lab/image-20210626192056124.png" alt="image-20210626192056124"></p>
+<p>可以发现 <code>ByteStream</code>的 <code>read</code>和 <code>write</code>花费了较多的时间.</p>
+<p>使用 <code>BufferList</code>优化后的 gporf数据如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626193318753.png" alt="image-20210626193318753" style="zoom:80%;">
+
+<p>吞吐量数据如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626193726343.png" alt="image-20210626193726343" style="zoom:80%;">
+
+<h2 id="Lab-1-stitching-substrings-into-a-byte-stream"><a href="#Lab-1-stitching-substrings-into-a-byte-stream" class="headerlink" title="Lab 1:  stitching substrings into a byte stream"></a>Lab 1:  stitching substrings into a byte stream</h2><p>TCP提供<strong>可靠数据传输服务(reliable data transfer)</strong>, 它保证数据正确, 按序交付. 但是底层的网络可能只是提供<strong>尽力而为交付服务(best-effort delivery service)</strong>, 也就是说, 它传输的数据包可能<strong>丢失(loss), 乱序(reordered), 被篡改(altered), 重复到达(duplicated).</strong></p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626211803871.png" alt="image-20210626211803871" style="zoom:80%;">
+
+<p>TCP socket有两个方向的字节流, outbound 即 <code>TCPSender</code>, inbound 即 <code>TCPReceiver</code>. 这个实验需要实现一个<strong>字节流重组器</strong> <code>StreamReassembler</code>, 它是 <code>TCPReceiver</code>的一部分. </p>
+<p>TCP提供的是一种字节流服务, 其发送的每一个字节数据都在字节流中占据一个独特的序号. <code>TCPSender</code>从字节流中取出一个片段, 称为 <code>segment</code>, 把它发送给对端(peer). 对端的 <code>TCPReceiver</code>把收到的 <code>segment</code>输入给字节流重组器, 字节流重组器会把这些片段组装成连续字节流, 就和对端发送的一样.</p>
+<p><code>StreamReassembler</code>的主要需要实现的接口如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">push_substring</span><span class="params">(<span class="keyword">const</span> string &amp;data, <span class="keyword">const</span> <span class="keyword">uint64_t</span> index, <span class="keyword">const</span> <span class="keyword">bool</span> eof)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p><code>data</code>是一个字节片段, <code>index</code>表示的是 <code>data</code>的第一个字节在整个字节流中占据的序号, <code>eof</code>表示 <code>data</code>的最后一个字节是否为整个字节流的最后一个字符, 表示流结束了.</p>
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><p><code>StreamReassembler</code>也有一个容量, 含义如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626215417102.png" alt="image-20210626215417102" style="zoom:80%;">
+
+<p>已经重组但未被用户读取的字节数(上图绿色部分), 已经接收但未被重组的字节数(上图红色部分), 两者之和不能超过 <code>StreamReassembler</code>的容量.</p>
+<h3 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h3><figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ByteStream _output;  <span class="comment">// The reassembled in-order byte stream</span></span><br><span class="line"><span class="keyword">size_t</span> _capacity;    <span class="comment">// The maximum number of bytes</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// The fragments that not yet been reassembled    </span></span><br><span class="line">std::map&lt;<span class="keyword">uint64_t</span>, std::string&gt; _suspend_buf&#123;&#125;;  </span><br><span class="line"><span class="keyword">size_t</span> _next&#123;&#125;;  <span class="comment">// The index of next byte in the stream</span></span><br><span class="line"><span class="keyword">size_t</span> _last&#123;<span class="keyword">static_cast</span>&lt;<span class="keyword">size_t</span>&gt; (<span class="number">-1</span>)&#125;;  <span class="comment">// The last byte in the entire stream =&gt; EOF</span></span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>std::map</code>作为内部缓存乱序字节片段的容器 <code>_suspend_buf</code>, key为字节片段首字节的序号. 并且维护 <code>_next</code>, 表示当前想要的下一个字节的序号. 维护 <code>_last</code>的原因是: 有可能字节流最后的片段先到达了, 但它并不是此时我们想要的, 当前面空缺的片段到齐之后, 需要终结字节流.</p>
+<p><code>_suspend_buf</code>中挂起的字节片段不能重叠(overlap), 比如下面两个片段:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2                     4</span><br><span class="line">+---+---+---+---+     +---+---+---+---+ </span><br><span class="line">| c | d | e | f |     | e | f | g | h |</span><br><span class="line">+---+---+---+---+     +---+---+---+---+</span><br></pre></td></tr></table></figure>
+
+<p>需要合并成一个片段:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">2</span><br><span class="line">+---+---+---+---+---+---+</span><br><span class="line">| c | d | e | f | g | h |</span><br><span class="line">+---+---+---+---+---+---+</span><br></pre></td></tr></table></figure>
+
+<p>需要注意:</p>
+<ul>
+<li>如果当前 <code>StreamReassembler</code>的容量已满, 且 <code>_suspend_buf</code>中还有未被重组的字节片段. <strong>但是此时到达了一个我们想要的字节片段(<code>index &lt;= _next</code>), 需要优先把该字节片段写入到 <code>_output</code>.</strong> 然后从 <code>_suspend_buf</code>的尾部开始, 移除超过容量的字节数.</li>
+</ul>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">StreamReassembler::push_substring</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="keyword">const</span> string &amp;data, </span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="keyword">const</span> <span class="keyword">size_t</span> index, </span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="keyword">const</span> <span class="keyword">bool</span> eof</span></span></span><br><span class="line"><span class="params"><span class="function">)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (_output.<span class="built_in">input_ended</span>() || _output.<span class="built_in">error</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (eof) &#123;</span><br><span class="line">        _last = index + data.<span class="built_in">size</span>();</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (data.<span class="built_in">empty</span>()) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (index &lt;= _next) &#123;</span><br><span class="line">        <span class="built_in">commit</span>(data, index);  <span class="comment">// 写入到 _output</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="built_in">suspend</span>(data, index);  <span class="comment">// 添加到 _suspend_buf</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">auto</span> iter = _suspend_buf.<span class="built_in">begin</span>(); iter != _suspend_buf.<span class="built_in">end</span>(); ) &#123;</span><br><span class="line">        <span class="keyword">if</span> (iter-&gt;first &gt; _next) <span class="keyword">break</span>;</span><br><span class="line">        <span class="built_in">commit</span>(iter-&gt;second, iter-&gt;first);</span><br><span class="line">        _unassembled_bytes -= iter-&gt;second.<span class="built_in">size</span>();</span><br><span class="line">        iter = _suspend_buf.<span class="built_in">erase</span>(iter);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">     * 如果当前未读取和未装配的字节数加起来超过了容量, 移除map末尾的溢出数据</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">if</span> (_unassembled_bytes + _output.<span class="built_in">buffer_size</span>() &gt; _capacity) &#123;</span><br><span class="line">        <span class="built_in">remove</span>(_unassembled_bytes + _output.<span class="built_in">buffer_size</span>() - _capacity);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lab-2-the-TCP-receiver"><a href="#Lab-2-the-TCP-receiver" class="headerlink" title="Lab 2: the TCP receiver"></a>Lab 2: the TCP receiver</h2><img src="/2021/07/11/CS144-network-lab/image-20210626211803871.png" alt="image-20210626211803871" style="zoom: 67%;">
+
+<p><code>TCPReceiver</code>的职能是把 incoming TCP segments 转换成 incoming bytes stream. 除此之外, 它还需要告诉<strong>本端</strong>的<code>TCPSender</code>两件事情:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626215417102.png" alt="image-20210626215417102" style="zoom: 67%;">
+
+<ul>
+<li><strong>acknowledgment number (<code>ackno</code>)</strong>. 它的含义是: <code>TCPReceiver</code>希望从<strong>对端</strong>的 <code>TCPSender</code>获取的<strong>下一个字节序号</strong>. 相当于上图中的 “first unassembled”. </li>
+<li><strong>window size (<code>win</code>)</strong>. 表示 “first unassembled” 与 “first unacceptable” 之间的距离.</li>
+</ul>
+<p><code>ackno</code> 和 <code>win</code>共同描述了 <code>TCPReceiver</code>的窗口, <code>TCPReceiver</code>使用这个窗口来控制<strong>对端</strong>发送的流: 只允许<strong>对端</strong>的 <code>TCPSender</code>发送序号大于等于 <code>ackno</code>, 且小于 <code>ackno + win</code>的字节. </p>
+<p>数据不断的到达, 窗口也在不断的向右滑动, 这便是著名的<strong>滑动窗口</strong> (<em>是吗?</em>).</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210620161545407.png" alt="image-20210620161545407" style="zoom: 33%;">
+
+<h3 id="Translating-between-64-bit-indexes-and-32-bit-seqnos"><a href="#Translating-between-64-bit-indexes-and-32-bit-seqnos" class="headerlink" title="Translating between 64-bit indexes and 32-bit seqnos"></a>Translating between 64-bit indexes and 32-bit seqnos</h3><p>字节流重组器 <code>StreamReassembler</code>使用的 index是64位的, 而 TCP header中的 seqno是32位的. 这部分实验的任务是实现 64位 index与32位 seqno之间的转换.</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210626232831255.png" alt="image-20210626232831255" style="zoom: 80%;">
+
+<blockquote>
+<p>由于我的数学思维实在太糟糕, 这部分代码我修修改改了很久都没有通过测试用例. 最后不得已参考了网上的资料, 实在是惭愧.</p>
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">uint64_t</span> <span class="title">unwrap</span><span class="params">(WrappingInt32 n, WrappingInt32 isn, <span class="keyword">uint64_t</span> checkpoint)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">uint64_t</span> pre = checkpoint &amp; (~<span class="number">0xffffffff</span>lu);</span><br><span class="line">    <span class="keyword">uint64_t</span> num;</span><br><span class="line">    <span class="keyword">if</span> (n.<span class="built_in">raw_value</span>() &gt;= isn.<span class="built_in">raw_value</span>()) &#123;</span><br><span class="line">        num = n.<span class="built_in">raw_value</span>() - isn.<span class="built_in">raw_value</span>();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        num = UINT32_MAX + <span class="number">1lu</span> + n.<span class="built_in">raw_value</span>() - isn.<span class="built_in">raw_value</span>();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">uint64_t</span> a = pre + num;</span><br><span class="line">    <span class="keyword">uint64_t</span> b = a + (UINT32_MAX + <span class="number">1lu</span>);</span><br><span class="line">    <span class="keyword">uint64_t</span> c = a - (UINT32_MAX + <span class="number">1lu</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">auto</span> ABS = [] (<span class="keyword">uint64_t</span> x, <span class="keyword">uint64_t</span> y) &#123;</span><br><span class="line">        <span class="keyword">if</span> (x &gt; y) <span class="keyword">return</span> x - y;</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">return</span> y - x;</span><br><span class="line">    &#125;;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">ABS</span>(a, checkpoint) &lt; <span class="built_in">ABS</span>(b, checkpoint)) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">ABS</span>(a, checkpoint) &lt; <span class="built_in">ABS</span>(c, checkpoint)) &#123;</span><br><span class="line">            <span class="keyword">return</span> a;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">return</span> c;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> b;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="实现-TCPReceiver"><a href="#实现-TCPReceiver" class="headerlink" title="实现 TCPReceiver"></a>实现 <code>TCPReceiver</code></h3><p><code>TCPReceiver</code>的工作逻辑如下:</p>
+<ol>
+<li>从对端接收 <code>TCPSegment</code>.</li>
+<li>使用 <code>StreamReassembler</code>重组字节流.</li>
+<li>计算<strong>应答序列号(<code>ackno</code>)和窗口大小(<code>win</code>)</strong>. <code>ackno</code>和 <code>win</code>最终会通过本端的 <code>TCPSender</code>发送给对端.</li>
+</ol>
+<img src="/2021/07/11/CS144-network-lab/image-20210627000339211.png" alt="image-20210627000339211" style="zoom:80%;">
+
+<p>主要实现下面这个接口:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">segment_received</span><span class="params">(<span class="keyword">const</span> TCPSegment &amp;seg)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/07/11/CS144-network-lab/image-20210627001115952.png" alt="image-20210627001115952" style="zoom:80%;">
+
+<p><code>segment_received</code>主要关注 <code>TCPSegment</code>的 <code>seqno</code>, <code>SYN</code>与<code>FIN</code>标志位, <code>payload</code>. </p>
+<p>需要注意的是, 出现下面两种情况需要丢弃接收到的 <code>TCPSegment</code>:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627004921821.png" alt="image-20210627004921821" style="zoom:67%;">
+
+<p>TCP的 <code>SYN</code>和 <code>FIN</code>标志位都占据了字节流中的一个序号, 并且 <code>SYN</code>的绝对序号一定为0. </p>
+<h2 id="Lab-3-the-TCP-sender"><a href="#Lab-3-the-TCP-sender" class="headerlink" title="Lab 3: the TCP sender"></a>Lab 3: the TCP sender</h2><img src="/2021/07/11/CS144-network-lab/image-20210626211803871.png" alt="image-20210626211803871" style="zoom: 67%;">
+
+<p><code>TCPSender</code>从 <code>ByteStream</code>(由上层应用创建并且往里面写数据)读数据, 把读取到的字节流切分为一个个有序的 <code>TCPSegment</code>, 发送给对端.</p>
+<p><code>TCPSender</code>的具体职责为:</p>
+<ul>
+<li>追踪<strong>对端的接收窗口</strong>(通过 <code>ackno</code>和 <code>win</code>).</li>
+<li>Fill the window. 从 <code>ByteStream</code>里读取数据, 并发送出去, 直到从 <code>ByteStream</code>里没有数据, 或者<strong>对端的接收窗口已经被填满</strong>.</li>
+<li>追踪哪些 segment已经发送出去, 但是还没有被对端应答(acknowledged).</li>
+<li>如果定时器超时, 重传未被应答的 segment.</li>
+</ul>
+<p>需要注意的是 “fill the window”这一步, <code>TCPSender</code>总是应该<strong>发送尽可能多的数据去填满它看到的对端的接收窗口</strong>, 并且一直重传丢失的 segment, 直到对端应答所有的 segment. 这被称为 <strong>“automatic repeat request” (ARQ)</strong>.</p>
+<p>TCP使用的是<strong>累计应答</strong>机制, 也就是说: 如果对端发送(回应)一个<code>ackno</code>为100的数据包, 表示对端已经接收到了序号为100之前的所有字节(<strong>不包括100</strong>), 对端希望本端的 <code>TCPSender</code>发送序号为100之后的数据(<strong>包括100</strong>).</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210620161647505.png" alt="image-20210620161647505" style="zoom: 33%;">
+
+<p>上图中的 <code>SWS</code>其实可以简单理解为 <code>TCPSender</code>看到的<strong>对端的接收窗口大小</strong> <code>win</code>, <code>LAR</code>可以简单理解为 <code>ackno</code>.</p>
+<p>这里有一个问题: 如果对端回复其接收窗口大小为0, 该怎么办?</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627023248631.png" alt="image-20210627023248631" style="zoom: 67%;">
+
+<h3 id="实现-TCPSender"><a href="#实现-TCPSender" class="headerlink" title="实现 TCPSender"></a>实现 <code>TCPSender</code></h3><img src="/2021/07/11/CS144-network-lab/1608954-20200914214818554-10014625.png" alt="img" style="zoom:80%;">
+
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">std::deque&lt;TCPSegment&gt; _segments_nonack&#123;&#125;;  <span class="comment">// segments that alreadly sent but non-ack</span></span><br><span class="line"><span class="keyword">uint64_t</span> _next_seqno&#123;<span class="number">0</span>&#125;;  <span class="comment">// the (absolute) sequence number for the next byte to be sent</span></span><br><span class="line"><span class="keyword">uint64_t</span> _recver_ackno&#123;&#125;;  <span class="comment">// ackno</span></span><br><span class="line"><span class="keyword">uint64_t</span> _recver_wndsz&#123;&#125;;  <span class="comment">// win</span></span><br><span class="line">RetxTimer _timer&#123;&#125;;</span><br><span class="line"><span class="keyword">unsigned</span> <span class="keyword">int</span> _consecutive_retx&#123;&#125;;  <span class="comment">// 连续重传的次数, 在Lab4会用到</span></span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>std::deque&lt;TCPSegment&gt; _segments_nonack</code>来追踪已发送但未被 ACK的 segment. 当定时器超时, 重传最早发送但未 ACK的 segment(如果有的话), 也就是 <code>_segments_nonack</code>的头部数据, 并根据情况, 让 <strong>retransmission timeout (RTO)</strong> 翻倍:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">TCPSender::tick</span><span class="params">(<span class="keyword">const</span> <span class="keyword">size_t</span> ms_since_last_tick)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!_timer.<span class="built_in">expires</span>(ms_since_last_tick)) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (_segments_nonack.<span class="built_in">empty</span>()) &#123;  <span class="comment">// 所有segment都被ACK</span></span><br><span class="line">        _timer.<span class="built_in">stop</span>();</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ++_consecutive_retx;  <span class="comment">// 连续重传次数</span></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">auto</span> seg = _segments_nonack.<span class="built_in">front</span>();</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> rto = _initial_retransmission_timeout;</span><br><span class="line">    <span class="comment">/* 如果对端的窗口大小为0, 不需要使RTO翻倍 */</span></span><br><span class="line">    <span class="keyword">if</span> (_recver_wndsz != <span class="number">0</span> || seg.<span class="built_in">header</span>().syn) &#123; </span><br><span class="line">        <span class="comment">/* Double the value of RTO */</span></span><br><span class="line">        rto &lt;&lt;= _consecutive_retx;</span><br><span class="line">    &#125;</span><br><span class="line">    _segments_out.<span class="built_in">push</span>(std::<span class="built_in">move</span>(seg));  <span class="comment">// 重传</span></span><br><span class="line">    _timer.<span class="built_in">run</span>(rto);  <span class="comment">// 启动定时器</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>关于定时器启动/停止的时机参考 <strong>计算机网络-自顶向下方法</strong>:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627024828072.png" alt="image-20210627024828072" style="zoom:67%;">
+
+<p>对于 <code>ack_received</code>函数, 需要验证 <code>ackno</code>的有效性.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">TCPSender::ack_received</span><span class="params">(<span class="keyword">const</span> WrappingInt32 ackno, <span class="keyword">const</span> <span class="keyword">uint16_t</span> window_size)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">size_t</span> abs_ackno = <span class="built_in">unwrap</span>(ackno, _isn, _recver_ackno);</span><br><span class="line">    <span class="keyword">if</span> (abs_ackno &gt; _next_seqno) &#123;  <span class="comment">// 如果ACK未发送的数据, 忽略它</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    _recver_wndsz = window_size;  <span class="comment">// new window size</span></span><br><span class="line">    <span class="keyword">if</span> (abs_ackno &lt;= _recver_ackno) &#123;  <span class="comment">// 如果重复ACK, 也忽略它</span></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    _recver_ackno = abs_ackno;  <span class="comment">// new ACK</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Lab-4-实现完整的-TCP协议"><a href="#Lab-4-实现完整的-TCP协议" class="headerlink" title="Lab 4: 实现完整的 TCP协议"></a>Lab 4: 实现完整的 TCP协议</h2><img src="/2021/07/11/CS144-network-lab/image-20210627030653507.png" alt="image-20210627030653507" style="zoom:67%;">
+
+<p>完整的TCP状态机转换图如下, 如果理解了这个图, 完成这个实验基本上不成问题:</p>
+<p><img src="/2021/07/11/CS144-network-lab/1608954-20200914214827124-2104730079.png" alt="img"></p>
+<p>这个实验需要把 <code>TCPSender</code>和 <code>TCPReceiver</code>组合起来, 完成 <code>TCPConnection</code>. 这个实验的主要难点是<strong>连接的关闭这部分</strong>, 以及前面几个实验的 BUG修复.</p>
+<blockquote>
+<p>虽然之前 <code>TCPSender</code>和 <code>TCPReceiver</code>的测试用例(unit tests)全部通过了, 但是在这个实验中, 完整的集成测试(integration tests)通过不了. 因此, 花了比较多的时间来 gdb调试.</p>
+<p>最主要的问题是, 当时<strong>关闭连接这部分没有处理好</strong>, 虽然关于状态机的转换的测试用例可以通过(我也很奇怪为什么关于close的测试用例能通过…), 但是真正使用我的TCP实现来传输数据(有概率丢包)时, 总是会发生某些测试用例一会可以通过, 一会又无法通过.</p>
+</blockquote>
+<h3 id="关闭连接"><a href="#关闭连接" class="headerlink" title="关闭连接"></a>关闭连接</h3><p>关闭连接分为两种情况:</p>
+<ul>
+<li>unclean shutdown. 收到或发送一个 <code>RST</code>标志位置1的 segment, 表示连接状态错误, 需要立刻关闭连接. 当连续重传次数大于某个阈值时, 需要发送 <code>RST</code>.</li>
+<li>clean shutdown. 最普遍和复杂的情况.</li>
+</ul>
+<p>clean shutdown又分为两种情况:</p>
+<ul>
+<li><p>passive close. <strong>如果 <code>TCPConnection</code>在发送 <code>FIN</code>之前, 就接收到了对端发送的 <code>FIN</code>, 则进入passive close状态.</strong></p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627034401032.png" alt="image-20210627034401032" style="zoom:67%;"></li>
+<li><p>active close. <strong>如果 <code>TCPConnection</code>在接收到对端发送的 <code>FIN</code>之前, 就已经发送了 <code>FIN</code>, 则进入active close状态.</strong></p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627034630990.png" alt="image-20210627034630990" style="zoom:67%;"></li>
+</ul>
+<blockquote>
+<p>为什么需要 <code>TIME_WAIT</code>状态?</p>
+<p>TCP并不会响应 ACK数据包(ack ACKs), 有可能 ACK会丢失. 因此, 在 <code>TIME_WAIT</code>等待的这段时间里, <code>TCPConnection</code>可以 <del>响应对端重传</del> 响应对端请求重传的数据.</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627035513212.png" alt="image-20210627035513212" style="zoom:67%;">
+</blockquote>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">TCPConnection::check_close</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!_active_close &amp;&amp; !_passive_close) &#123;</span><br><span class="line">        <span class="keyword">if</span> (_sender.<span class="built_in">sent_fin</span>()) &#123;  <span class="comment">// active close</span></span><br><span class="line">            _active_close = <span class="literal">true</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (_receiver.<span class="built_in">closed</span>()) &#123;  <span class="comment">// passive close</span></span><br><span class="line">            _linger_after_streams_finish = <span class="literal">false</span>;</span><br><span class="line">            _passive_close = <span class="literal">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">/* passive close */</span></span><br><span class="line">    <span class="keyword">if</span> (_passive_close &amp;&amp; _sender.<span class="built_in">sent_fin</span>() &amp;&amp; _sender.<span class="built_in">bytes_in_flight</span>() == <span class="number">0</span>) &#123;  </span><br><span class="line">        _active = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* active close */</span></span><br><span class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (_active_close &amp;&amp; _receiver.<span class="built_in">closed</span>() &amp;&amp; _sender.<span class="built_in">bytes_in_flight</span>() == <span class="number">0</span> &amp;&amp; </span><br><span class="line">             !_time_wait) &#123; </span><br><span class="line">        _time_wait = <span class="literal">true</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h3><img src="/2021/07/11/CS144-network-lab/image-20210627040111623.png" alt="image-20210627040111623" style="zoom:67%;">
+
+<p>测试机器: Intel(R) Core(TM) i5-6300HQ CPU @ 2.30GHz. 操作系统: 5.4.0-74-generic #83~18.04.1-Ubuntu. 最终的benchmark数据如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210627040217121.png" alt="image-20210627040217121" style="zoom:80%;">
+
+<blockquote>
+<p><em>2021/07/28 更新</em>:</p>
+<p>由于之前的电脑坏了, 完全开不了机(之前进了两次水…), 所以买了一个新的电脑. 处理器为 <strong>AMD Ryzen 7 5800H</strong>, 8核16线程, 基准频率3.20 GHz. 我拿到机器的第一个念头就是跑一下tcp benchmark, 结果如下:</p>
+<img src="/2021/07/11/CS144-network-lab/image-20210728204548324.png" alt="image-20210728204548324" style="zoom:80%;">
+
+<p><strong>AMD yes!!!</strong></p>
+</blockquote>
+<h2 id="Lab-5-the-network-interface"><a href="#Lab-5-the-network-interface" class="headerlink" title="Lab 5: the network interface"></a>Lab 5: the network interface</h2><p>前面的实验中已经实现了用户空间的 TCP协议, 但是怎么通过我们实现的 TCP协议把数据发送到真实的网络中去? 有以下几种方式:</p>
+<ul>
+<li>TCP-in-UDP-in-IP. 借助 Linux网络协议栈中的 UDP, 把 TCP分片作为 UDP数据包的 payload. 由 Linux网络协议栈添加 UDP header, IP header, Ethernet header, 然后发送出去.</li>
+<li>TCP-in-IP. 直接把 TCP分片作为 IP数据包的payload, 即经典的 <strong>TCP/IP</strong>. 需要应用程序添加完整的 IP header, 并且需要借助 Linux提供的 TUN device.</li>
+<li>TCP-in-IP-in-Ethernet. 应用程序添加完整的 IP header, Ethernet header, 不依赖 Linux网络协议栈. 不过需要借助 Linux提供的 TAP device.</li>
+</ul>
+<p>network interface的作用: <strong>实现 IP数据包和 Ethernet帧之间的转换</strong>, 并且提供 <strong>IP地址和 Ethernet地址(即MAC地址)之间的映射</strong>, 如果某个映射未知, 通过 <strong>Address Resolution Protocol (ARP)</strong> 来获取该映射.</p>
+<h3 id="实现-1"><a href="#实现-1" class="headerlink" title="实现"></a>实现</h3><p>主要实现以下三个接口:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">send_datagram</span><span class="params">(<span class="keyword">const</span> InternetDatagram &amp;dgram, <span class="keyword">const</span> Address &amp;next_hop)</span></span>;</span><br><span class="line"><span class="function">std::optional&lt;InternetDatagram&gt; <span class="title">recv_frame</span><span class="params">(<span class="keyword">const</span> EthernetFrame &amp;frame)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">NetworkInterface::tick</span><span class="params">(<span class="keyword">const</span> <span class="keyword">size_t</span> ms_since_last_tick)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>当要发送一个 IP数据报时, 调用 <code>send_datagram</code>. <code>next_hop</code>指示这个数据报下一跳发送到哪里, <strong>注意它并不表示这个数据报最终要送达的目的 IP地址.</strong> network interface内部需要维护一个 IP地址和 Ethernet地址之间的映射表:</p>
+<ul>
+<li><p>如果 <code>next_hop</code>在映射表中, 则直接把该 IP数据报封装成 Ethernet帧, 发往 <code>next_hop</code>映射到的 Ethernet地址.</p>
+</li>
+<li><p>如果 <code>next_hop</code> 不在映射表中, 则<strong>通过 ARP广播查询 <code>next_hop</code>映射到的 Ethernet地址(ARP request message), 并且把该 IP数据报缓存起来</strong>, 等知道其下一跳的 Ethernet地址之后再发送.</p>
+<blockquote>
+<p>这里有一个坑点: 如果已经发送了 ARP request message, 但是还没有得到回复, 并且现在通过 <code>send_datagram</code>发送的数据报的下一跳的 Ethernet地址也是未知的, 那么<strong>不需要再次发送 ARP request message, 直接缓存该 IP数据报, 等前一个 ARP request message得到回复之后, 再发送新的 ARP request message</strong>. 也就是说, <strong>最多同时发送一个 ARP request message</strong>. </p>
+<p>相当于<strong>停等</strong>, 而不是像 TCP一样的流水线.</p>
+</blockquote>
+</li>
+</ul>
+<p>当接收到一个 Ethernet帧时, 调用 <code>recv_frame</code>. 注意需要忽略所有目标不是本 network interface的 Ethernet帧. </p>
+<ul>
+<li>如果 Ethernet帧的 payload是 IP数据报, 直接把 IP数据报返回.</li>
+<li>如果 Ethernet帧的 payload是 <strong>ARP reply/request message</strong>. 把 IP地址和 Ethernet地址之间的映射关系缓存到映射表里. 并且发送缓存的 IP数据报中可以发送的那些. 如果是 request 本 network interface, 发送 ARP reply message回去.</li>
+</ul>
+<h2 id="Lab-6-building-an-IP-router"><a href="#Lab-6-building-an-IP-router" class="headerlink" title="Lab 6:  building an IP router"></a>Lab 6:  building an IP router</h2><img src="/2021/07/11/CS144-network-lab/image-20210628230855985.png" alt="image-20210628230855985" style="zoom:80%;">
+
+<p>注意三点:</p>
+<ul>
+<li>IP地址最长匹配, longest-prefix match.</li>
+<li>IP数据报的 TTL.</li>
+<li>“direct”: IP数据报的 <code>next hop</code>就是 IP数据报的目标 IP地址.</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/modern-C/" rel="tag"># modern C++</a>
+              <a href="/tags/TCP/" rel="tag"># TCP</a>
+              <a href="/tags/%E8%AE%A1%E7%AE%97%E6%9C%BA%E7%BD%91%E7%BB%9C/" rel="tag"># 计算机网络</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/06/28/defer-scope_guard/" rel="prev" title="ScopeGuard & defer">
+      <i class="fa fa-chevron-left"></i> ScopeGuard & defer
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/11/CMU-database-lab-1/" rel="next" title="CMU DBMS实验笔记">
+      CMU DBMS实验笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-0-networking-warmup"><span class="nav-number">1.</span> <span class="nav-text">Lab 0: networking warmup</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A11-webget"><span class="nav-number">1.1.</span> <span class="nav-text">任务1: webget</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BB%BB%E5%8A%A12-An-in-memory-reliable-byte-stream"><span class="nav-number">1.2.</span> <span class="nav-text">任务2: An in-memory reliable byte stream</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-1-stitching-substrings-into-a-byte-stream"><span class="nav-number">2.</span> <span class="nav-text">Lab 1:  stitching substrings into a byte stream</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">2.1.</span> <span class="nav-text">注意事项</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.2.</span> <span class="nav-text">实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-2-the-TCP-receiver"><span class="nav-number">3.</span> <span class="nav-text">Lab 2: the TCP receiver</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Translating-between-64-bit-indexes-and-32-bit-seqnos"><span class="nav-number">3.1.</span> <span class="nav-text">Translating between 64-bit indexes and 32-bit seqnos</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-TCPReceiver"><span class="nav-number">3.2.</span> <span class="nav-text">实现 TCPReceiver</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-3-the-TCP-sender"><span class="nav-number">4.</span> <span class="nav-text">Lab 3: the TCP sender</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-TCPSender"><span class="nav-number">4.1.</span> <span class="nav-text">实现 TCPSender</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-4-%E5%AE%9E%E7%8E%B0%E5%AE%8C%E6%95%B4%E7%9A%84-TCP%E5%8D%8F%E8%AE%AE"><span class="nav-number">5.</span> <span class="nav-text">Lab 4: 实现完整的 TCP协议</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E9%97%AD%E8%BF%9E%E6%8E%A5"><span class="nav-number">5.1.</span> <span class="nav-text">关闭连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%9C"><span class="nav-number">5.2.</span> <span class="nav-text">结果</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-5-the-network-interface"><span class="nav-number">6.</span> <span class="nav-text">Lab 5: the network interface</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0-1"><span class="nav-number">6.1.</span> <span class="nav-text">实现</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Lab-6-building-an-IP-router"><span class="nav-number">7.</span> <span class="nav-text">Lab 6:  building an IP router</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yl.chen</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YsLn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YsLn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yl.chen</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

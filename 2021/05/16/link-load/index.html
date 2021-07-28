@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Sans Serif:300,300italic,400,400italic,700,700italic|Serif:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Fira Code:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="参考资料:   从零实现动态加载   C语言是一种编译型的语言, 源文件到二进制文件需要经过编译和链接(link)两个过程.  编译这里所说的”编译”指的是由编译器和汇编器生成可重定位目标文件, 即.o文件, 使用file查看一个.o文件会得到如下信息: “ELF 64-bit LSB relocatable”.    ELF可重定位目标文件包含了很多个 section, 以及一个供链接器使用的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="链接 &amp; 加载">
+<meta property="og:url" content="https://ysln.github.io/2021/05/16/link-load/index.html">
+<meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="参考资料:   从零实现动态加载   C语言是一种编译型的语言, 源文件到二进制文件需要经过编译和链接(link)两个过程.  编译这里所说的”编译”指的是由编译器和汇编器生成可重定位目标文件, 即.o文件, 使用file查看一个.o文件会得到如下信息: “ELF 64-bit LSB relocatable”.    ELF可重定位目标文件包含了很多个 section, 以及一个供链接器使用的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516150302001.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516153703296.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516154326502.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516155506813.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516163315766.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516173640390.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516170118292.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516174623510.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516181932551.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516180940569.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516190343620.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516190753107.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516190923040.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516190946974.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516191821201.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516192537960.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516192719963.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516195040666.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516195417013.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516202831119.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516202629009.png">
+<meta property="og:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516203726500.png">
+<meta property="article:published_time" content="2021-05-15T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-27T14:14:59.285Z">
+<meta property="article:author" content="yl.chen">
+<meta property="article:tag" content="C">
+<meta property="article:tag" content="链接">
+<meta property="article:tag" content="加载">
+<meta property="article:tag" content="调试">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/2021/05/16/link-load/image-20210516150302001.png">
+
+<link rel="canonical" href="https://ysln.github.io/2021/05/16/link-load/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>链接 & 加载 | cyl's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">cyl's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/05/16/link-load/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          链接 & 加载
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-05-16 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-16T00:00:00+08:00">2021-05-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-07-27 22:14:59" itemprop="dateModified" datetime="2021-07-27T22:14:59+08:00">2021-07-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/NJU-OS-Lab/" itemprop="url" rel="index"><span itemprop="name">NJU OS Lab</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p><strong>参考资料</strong>: </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1HN41197Ko?p=19">从零实现动态加载</a></li>
+</ul>
+</blockquote>
+<p>C语言是一种编译型的语言, 源文件到二进制文件需要经过编译和链接(link)两个过程. </p>
+<h2 id="编译"><a href="#编译" class="headerlink" title="编译"></a>编译</h2><p>这里所说的”编译”指的是由编译器和汇编器生成可重定位目标文件, 即.o文件, 使用<code>file</code>查看一个.o文件会得到如下信息: “ELF 64-bit LSB relocatable”. </p>
+<img src="/2021/05/16/link-load/image-20210516150302001.png" alt="image-20210516150302001" style="zoom:67%;">
+
+<p>ELF可重定位目标文件包含了很多个 section, 以及一个供链接器使用的描述各个section信息的节头部表(section header table). </p>
+<h2 id="链接"><a href="#链接" class="headerlink" title="链接"></a>链接</h2><p>链接器的输入是一系列可重定位目标文件(包括静态链接库), 它的工作简单来说就是把所有 .o文件的代码( .text等)和数据(.data等)分别整合成 segment(段), 并把它们复制到一个输出文件中, 比如 a.out. 不过在此之前, 链接器需要完成一些额外的工作.</p>
+<h3 id="符号解析"><a href="#符号解析" class="headerlink" title="符号解析"></a>符号解析</h3><p>符号解析即: 把代码中每个引用的符号与它输入的可重定位目标文件的符号表( .symtab)中的一个确定的符号定义关联起来.</p>
+<p>如果符号解析失败, 链接器将会报错 <code>undefined reference to xxx</code>. 比如下面的程序:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">extern</span> <span class="keyword">int</span> x;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">int</span> y = <span class="number">4</span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    x = func();</span><br><span class="line">    y = x;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/05/16/link-load/image-20210516153703296.png" alt="image-20210516153703296" style="zoom:67%;">
+
+<p>关于强符号与弱符号及其他详细内容, 参考 <strong>CSAPP</strong> 第7章.</p>
+<h3 id="重定位"><a href="#重定位" class="headerlink" title="重定位"></a>重定位</h3><img src="/2021/05/16/link-load/image-20210516154326502.png" alt="image-20210516154326502" style="zoom:67%;">
+
+<p>比如上面的程序生成的a.o文件中:</p>
+<img src="/2021/05/16/link-load/image-20210516155506813.png" alt="image-20210516155506813" style="zoom:67%;">
+
+<p><code>func</code>和<code>x, y</code>这三个符号在运行时刻的地址是未知的(虽然<code>y</code>是定义在本模块的符号), 需要由链接器来确定它们的地址.</p>
+<h2 id="加载"><a href="#加载" class="headerlink" title="加载"></a>加载</h2><h3 id="实现一个最简单的”加载器”"><a href="#实现一个最简单的”加载器”" class="headerlink" title="实现一个最简单的”加载器”"></a>实现一个最简单的”加载器”</h3><blockquote>
+<p><strong>这里的”加载器”的功能并不是 <code>execve</code>这样的加载器, 而是更像一个玩具版的”动态链接器”?</strong></p>
+</blockquote>
+<p>程序即<strong>代码加上数据</strong>. Linux下的可执行文件格式是ELF, ELF文件中除了代码和数据外, 还包含了一些辅助信息, 比如供加载器使用的信息. 对于一个最简单的玩具加载器来说, ELF文件中的其他辅助信息都是不必要的, 完全可以把 .o文件中的代码和数据摘取出来, 生成一个二进制文件. 比如下面的程序:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// b.c</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">(<span class="keyword">int</span> a)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> a * a;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>b.c 这个文件里只定义了一个函数<code>func</code>, 它的作用是返回一个数的平方. 使用 gcc的<code>-c</code>选项生成 .o文件(只编译不链接), 然后使用下面的命令生成二进制文件:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">objcopy -S -j .text -O binary b.o b.bin</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/05/16/link-load/image-20210516163315766.png" alt="image-20210516163315766" style="zoom:67%;">
+
+<p>生成的 b.bin文件只有16 Bytes. 二进制文件中可以发现一个熟悉的字节<code>c3</code>, 也就是x86指令 <code>retq</code>.</p>
+<blockquote>
+<p>当前的 b.c中只有代码, 没有数据(即静态变量或全局变量), 因为符号解析和重定位是在链接阶段完成的. 如果要想定义数据, 要么手动完成<del>符号解析</del> 重定位, 要么手写汇编代码, 比如:</p>
+<img src="/2021/05/16/link-load/image-20210516173640390.png" alt="image-20210516173640390" style="zoom:67%;">
+
+<p>这里的<code>x</code>这个符号是一个全局/静态数据, 但是它其实是位于代码节.</p>
+</blockquote>
+<p>可以使用下面的程序来”加载” b.bin:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// a.c</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/mman.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;fcntl.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;assert.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">typedef</span> <span class="title">int</span> <span class="params">(*FP)</span><span class="params">(<span class="keyword">int</span>)</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="function">FP <span class="title">load</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> fd = open(<span class="string">&quot;./b.bin&quot;</span>, O_RDONLY);</span><br><span class="line">  assert(fd &gt;= <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">  FP func = mmap(<span class="literal">NULL</span>, <span class="number">4096</span>, PROT_READ | PROT_EXEC, MAP_SHARED, fd, <span class="number">0</span>);</span><br><span class="line">  assert(func != (<span class="keyword">void</span> *)<span class="number">-1</span>);</span><br><span class="line">  close(fd);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> func;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    FP func = load();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> x = <span class="number">0</span>; x &lt; <span class="number">5</span>; ++x) &#123;</span><br><span class="line">      <span class="built_in">printf</span>(<span class="string">&quot;x =&gt; %d, func(x) =&gt; %d\n&quot;</span>, x, func(x));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的<code>load</code>函数即所谓的”加载器”, 它所做的工作就是打开 b.bin这个文件, 然后使用<code>mmap</code>系统调用, 将当前进程的虚拟地址空间中的一部分映射到打开文件对应的物理页面. 然后把 <code>mmap</code>返回的地址强制转换成函数指针, 这时便可以调用 b.c中的 <code>func</code>函数了.</p>
+<p>程序运行结果如下:</p>
+<img src="/2021/05/16/link-load/image-20210516170118292.png" alt="image-20210516170118292" style="zoom: 80%;">
+
+<h3 id="真-·-加载器-——-静态链接"><a href="#真-·-加载器-——-静态链接" class="headerlink" title="真 · 加载器 —— 静态链接"></a>真 · 加载器 —— 静态链接</h3><img src="/2021/05/16/link-load/image-20210516174623510.png" alt="image-20210516174623510" style="zoom:67%;">
+
+<p>静态链接生成的ELF文件的类型为”Executable file(EXEC)”. 程序中的所有符号都是被完全解析和重定位的, 比如所有函数符号的地址都是确定的, 在运行时可以直接调用.</p>
+<p>ELF可执行文件被设计的很容易加载到内存. 真正的加载器的工作类似于前面那个”玩具加载器”.</p>
+<ol>
+<li><p>读取ELF头, 根据ELF头找到段头部表(program header table).</p>
+</li>
+<li><p>根据段头部表的信息, 把需要加载(LOAD)的段(segment)加载到内存中. 例如, 使用<code>mmap</code>系统调用, 把进程的虚拟地址空间中连续的一段内存, 映射到可执行文件中连续的片(chunk), 并赋予这块内存相应的读/写/执行权限.</p>
+<img src="/2021/05/16/link-load/image-20210516181932551.png" alt="image-20210516181932551" style="zoom: 67%;"></li>
+<li><p>初始化进程的一些运行时环境, 比如栈(<code>argv</code>, <code>envp</code>等). 然后跳转到可执行文件指定的<code>entry</code>执行(通常是<code>_start</code>函数).</p>
+<img src="/2021/05/16/link-load/image-20210516180940569.png" alt="image-20210516180940569" style="zoom:67%;"></li>
+</ol>
+<h4 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h4><p>之前我的认知是动态链接库即 so文件只会在内存中加载一份. 其实更准确来说应该是, <strong>所有文件的只读部分都只会在内存中被加载一份, 所有进程共享.</strong> 只读部分包括 .text和 .rodata等. </p>
+<p>比如下面这个程序, 大小约为128MiB, 并且都是位于代码段, 也就是只读的:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="string">&quot;.fill 128*1024*1024, 1, 0x90&quot;</span></span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;so huge!\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="number">1</span>) sleep(<span class="number">2</span>);  <span class="comment">// 如果不睡眠, 运行上百个会有点卡</span></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译出来的 a.out的代码段的大小为 128MiB左右.</p>
+<img src="/2021/05/16/link-load/image-20210516190343620.png" alt="image-20210516190343620" style="zoom:67%;">
+
+<p>如果运行100个 a.out程序会怎样? 假如每个进程都要加载一份 a.out的代码和数据到内存中, 可以预料机器将要消耗10GiB内存. 运行之前的内存情况:</p>
+<img src="/2021/05/16/link-load/image-20210516190753107.png" alt="image-20210516190753107" style="zoom:67%;">
+
+<p>运行100个 a.out之后:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">for i in $(seq 1 100); do; ./a.out &amp;; done</span><br></pre></td></tr></table></figure>
+
+<img src="/2021/05/16/link-load/image-20210516190923040.png" alt="image-20210516190923040" style="zoom:67%;">
+
+<img src="/2021/05/16/link-load/image-20210516190946974.png" alt="image-20210516190946974" style="zoom:67%;">
+
+<p><strong>那如果是 128MiB可读可写的数据段呢?</strong></p>
+<p>考虑下面的程序:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="keyword">char</span> tab[<span class="number">128LU</span> * <span class="number">1024</span> * <span class="number">1024</span>];  <span class="comment">// 位于 .bss节</span></span><br><span class="line"><span class="comment">// 如果写成 char tab[128LU * 1024 * 1024] = &#123;1&#125;; 则tab位于 .data节</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">long</span> i = <span class="number">0</span>; i &lt; <span class="keyword">sizeof</span>(tab); i+= <span class="number">4096</span>) &#123;</span><br><span class="line">    tab[i] = <span class="number">7</span>;  <span class="comment">// 如果不这么做, 实际上不会消耗内存</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;so huge!\n&quot;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="number">1</span>) sleep(<span class="number">2</span>);</span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>程序中定义了一个大小为128MiB的数组<code>tab</code>, 由于没有初始化, 所以它位于 .bss节, 并且编译产生的 a.out大小只有几百KiB, 编译速度也很快. 但是如果 <code>tab</code>初始化了, 则它位于 .data节, 编译产生的 a.out大小约128MiB, 编译速度也很慢, 需要10几秒.</p>
+<img src="/2021/05/16/link-load/image-20210516191821201.png" alt="image-20210516191821201" style="zoom:67%;">
+
+<p>运行 a.out之前的内存情况如下, 还有2.8GiB的空闲内存:</p>
+<img src="/2021/05/16/link-load/image-20210516192537960.png" alt="image-20210516192537960" style="zoom:67%;">
+
+<p>运行10个 a.out之后, 空闲内存只剩下了1.5GiB, 如果再运行几个, 系统直接卡死:</p>
+<img src="/2021/05/16/link-load/image-20210516192719963.png" alt="image-20210516192719963" style="zoom:67%;">
+
+<blockquote>
+<p>在上面代码的第7~9行, 每隔4096个字节就写一个数据. 如果删去这几行, 进程实际上不会真正消耗128MiB内存, 即使运行上百个 a.out, 空闲内存也不会减少多少. 这背后的原理(应该?)就是Linux中著名的写时拷贝(Copy on Write, COW). </p>
+<p>合理猜测: 加载器在<code>mmap</code>时使用了私有映射标志(<code>MAP_PRIVATE</code>)? 或者说缺页?</p>
+</blockquote>
+<h3 id="真-·-加载器-——-动态链接"><a href="#真-·-加载器-——-动态链接" class="headerlink" title="真 · 加载器 —— 动态链接"></a>真 · 加载器 —— 动态链接</h3><p>GCC默认生成的二进制文件是动态链接的,  生成的文件文件类型为”Shared object file(DYN)”. 链接器生成动态链接的可执行目标文件时, 并不会 so文件中的代码和 <strong>数据(!!)</strong> 复制到可执行目标文件中. 反之, 链接器只复制了一些重定位和符号表信息, 它们使得运行时可以解析对依赖的 so中的代码和数据的引用.</p>
+<p>一个动态链接的程序从磁盘(disk)上刚加载出来时是 <strong>不完整(部分链接)</strong> 的, 比如程序调用的位于glibc动态链接库中的<code>printf</code>函数地址是未知的. 内核(加载器)不能立即把控制权交给该程序(即跳转到<code>entry</code>). 因此, 需要另外的辅助程序(helper program)的帮助 —– <strong>dynamic linker</strong> (一般是ld.so). 它的任务是: <strong>加载程序依赖的DSOs(动态链接库, 比如glibc), 并完成重定位</strong>.</p>
+<img src="/2021/05/16/link-load/image-20210516195040666.png" alt="image-20210516195040666" style="zoom:67%;">
+
+<p>动态链接的可执行目标文件的 program header table中专门有一项指定了运行时需要使用的动态链接器, 如下所示:</p>
+<img src="/2021/05/16/link-load/image-20210516195417013.png" alt="image-20210516195417013" style="zoom:67%;">
+
+<p>而且动态链接的可执行目标文件的<code>entry</code>也不是<code>_start</code>函数, 而是位于动态链接器中的某个入口函数.</p>
+<h4 id="注意事项-1"><a href="#注意事项-1" class="headerlink" title="注意事项"></a>注意事项</h4><h5 id="GOT-amp-PLT"><a href="#GOT-amp-PLT" class="headerlink" title="GOT &amp; PLT"></a>GOT &amp; PLT</h5><p><strong>PLT位于代码段, GOT位于数据段</strong>. 动态链接器重定位时需要完成的工作就是: 把程序引用的外部符号的地址, 填在对应的GOT表项中. 也就是说需要写GOT, 而GOT位于数据段, 每个进程不共享 so的数据段, 所以并无大碍.</p>
+<p>但是如果没有GOT, 那么重定位时就需要直接修改代码段, 把代码中引用的外部符号的地址改成每个进程地址空间中正确的地址(so可能被加载到每个进程虚拟地址空间的不同地方). 也就是说, 需要写代码段, 那这样的话就无法达到共享代码段的目的. 因此, <strong>GOT是必须要的</strong>.</p>
+<p><strong>PLT不是必须要的</strong>. 在使用gcc编译时, 可以使用<code>-fno-plt</code>选项, 含义为:</p>
+<blockquote>
+<p><em>Do not use the PLT for external function calls in position-independent code.  Instead, load the callee address at call sites from the GOT and branch to it.</em></p>
+<p>……</p>
+<p> <em><strong>Lazy binding requires use of the PLT; with -fno-plt all external symbols are resolved at load time.</strong></em></p>
+</blockquote>
+<p>使用PLT的一个目的就是<strong>函数符号</strong>延迟绑定. (可以参考<code>dlopen</code>的<code>RTLD_LAZY</code>和<code>RTLD_NOW</code>标志). 但是我实际调试的时候, 好像都是在加载时就完成了符号的绑定, 很奇怪.</p>
+<p>关于PLT, GOT, <code>dlopen</code>等详细信息参考 <strong>CSAPP</strong> 第7章.</p>
+<h4 id="如果-so中有一个128MiB的全局数组-会发生什么"><a href="#如果-so中有一个128MiB的全局数组-会发生什么" class="headerlink" title="如果 so中有一个128MiB的全局数组, 会发生什么?"></a>如果 so中有一个128MiB的全局数组, 会发生什么?</h4><p>在 ext.c中定义了两个64KiB的数组<code>ext1</code>和<code>ext2</code>, 编译成动态链接库 libext.so. huge.c中引用这两个数组:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// ext.c =&gt; gcc -fpic -shared ext.c -o libext.so</span></span><br><span class="line"><span class="keyword">char</span> ext1[<span class="number">64</span>*<span class="number">1024</span>] = &#123;<span class="number">13</span>&#125;;</span><br><span class="line"><span class="keyword">char</span> ext2[<span class="number">64</span>*<span class="number">1024</span>] = &#123;<span class="number">24</span>&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">return</span> ext1[<span class="number">0</span>]+ext2[<span class="number">0</span>];</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// huge.c =&gt; gcc huge.c -L. -lext</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">func</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">int</span> ext1[<span class="number">16</span>*<span class="number">1024</span>];</span><br><span class="line"><span class="keyword">extern</span> <span class="keyword">int</span> ext2[<span class="number">16</span>*<span class="number">1024</span>];</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;so huge! ext1[0] = %d, ext2[0] = %d\n&quot;</span>, ext1[<span class="number">0</span>], ext2[<span class="number">0</span>]);</span><br><span class="line"></span><br><span class="line">  FILE *fp = <span class="built_in">stdin</span>;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">printf</span>(<span class="string">&quot;func() =&gt; %d\n&quot;</span>, func());</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到编译出来的 libext.so大小为136KiB, 而 a.out的大小为11KiB. 所以可以推断 libext.so中的数据段并没有复制到 a.out中.</p>
+<img src="/2021/05/16/link-load/image-20210516202831119.png" alt="image-20210516202831119" style="zoom:80%;">
+
+<p>使用 objdump查看 a.out, 可以发现对 <code>ext1</code>和 <code>ext2</code>这两个外部<strong>变量</strong>符号已经重定位完成, 而 <code>func</code>这个外部<strong>函数</strong>符号还没有重定位.</p>
+<img src="/2021/05/16/link-load/image-20210516202629009.png" alt="image-20210516202629009" style="zoom:67%;">
+
+<p>使用 readelf查看 a.out, 可以发现其数据段的大小只有0x270 Bytes, 但是需要加载到地址空间中大小为0x202a8 Bytes, 约为128KiB的一块内存中.</p>
+<img src="/2021/05/16/link-load/image-20210516203726500.png" alt="image-20210516203726500" style="zoom:67%;">
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/C/" rel="tag"># C</a>
+              <a href="/tags/%E9%93%BE%E6%8E%A5/" rel="tag"># 链接</a>
+              <a href="/tags/%E5%8A%A0%E8%BD%BD/" rel="tag"># 加载</a>
+              <a href="/tags/%E8%B0%83%E8%AF%95/" rel="tag"># 调试</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/05/09/stack-probe/" rel="prev" title="动态增长的栈? -- 探索栈的容量">
+      <i class="fa fa-chevron-left"></i> 动态增长的栈? -- 探索栈的容量
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/05/16/crepl/" rel="next" title="C语言实现Real-Eval-Print-Loop (REPL)">
+      C语言实现Real-Eval-Print-Loop (REPL) <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%96%E8%AF%91"><span class="nav-number">1.</span> <span class="nav-text">编译</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%93%BE%E6%8E%A5"><span class="nav-number">2.</span> <span class="nav-text">链接</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AC%A6%E5%8F%B7%E8%A7%A3%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">符号解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%87%8D%E5%AE%9A%E4%BD%8D"><span class="nav-number">2.2.</span> <span class="nav-text">重定位</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A0%E8%BD%BD"><span class="nav-number">3.</span> <span class="nav-text">加载</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E6%9C%80%E7%AE%80%E5%8D%95%E7%9A%84%E2%80%9D%E5%8A%A0%E8%BD%BD%E5%99%A8%E2%80%9D"><span class="nav-number">3.1.</span> <span class="nav-text">实现一个最简单的”加载器”</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9C%9F-%C2%B7-%E5%8A%A0%E8%BD%BD%E5%99%A8-%E2%80%94%E2%80%94-%E9%9D%99%E6%80%81%E9%93%BE%E6%8E%A5"><span class="nav-number">3.2.</span> <span class="nav-text">真 · 加载器 —— 静态链接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">3.2.1.</span> <span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%9C%9F-%C2%B7-%E5%8A%A0%E8%BD%BD%E5%99%A8-%E2%80%94%E2%80%94-%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5"><span class="nav-number">3.3.</span> <span class="nav-text">真 · 加载器 —— 动态链接</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9-1"><span class="nav-number">3.3.1.</span> <span class="nav-text">注意事项</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#GOT-amp-PLT"><span class="nav-number">3.3.1.1.</span> <span class="nav-text">GOT &amp; PLT</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A6%82%E6%9E%9C-so%E4%B8%AD%E6%9C%89%E4%B8%80%E4%B8%AA128MiB%E7%9A%84%E5%85%A8%E5%B1%80%E6%95%B0%E7%BB%84-%E4%BC%9A%E5%8F%91%E7%94%9F%E4%BB%80%E4%B9%88"><span class="nav-number">3.3.2.</span> <span class="nav-text">如果 so中有一个128MiB的全局数组, 会发生什么?</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yl.chen</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YsLn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YsLn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yl.chen</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

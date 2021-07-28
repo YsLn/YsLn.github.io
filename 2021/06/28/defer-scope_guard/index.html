@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Sans Serif:300,300italic,400,400italic,700,700italic|Serif:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Fira Code:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="参考资料:   What is standard defer&#x2F;finalizer implementation in C++? The C++ Core Guidelines: gsl::finally Microsoft的 GSL实现   背景有一个发布 binder service的 server, 和 bind到 server的多个 client. server端有多个 binder线程,">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ScopeGuard &amp; defer">
+<meta property="og:url" content="https://ysln.github.io/2021/06/28/defer-scope_guard/index.html">
+<meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="参考资料:   What is standard defer&#x2F;finalizer implementation in C++? The C++ Core Guidelines: gsl::finally Microsoft的 GSL实现   背景有一个发布 binder service的 server, 和 bind到 server的多个 client. server端有多个 binder线程,">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/2021/06/28/defer-scope_guard/image-20210627112700564.png">
+<meta property="og:image" content="https://ysln.github.io/2021/06/28/defer-scope_guard/image-20210627113947634.png">
+<meta property="article:published_time" content="2021-06-27T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-27T14:15:12.216Z">
+<meta property="article:author" content="yl.chen">
+<meta property="article:tag" content="modern C++">
+<meta property="article:tag" content="RAII">
+<meta property="article:tag" content="Android">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/2021/06/28/defer-scope_guard/image-20210627112700564.png">
+
+<link rel="canonical" href="https://ysln.github.io/2021/06/28/defer-scope_guard/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>ScopeGuard & defer | cyl's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">cyl's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/06/28/defer-scope_guard/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          ScopeGuard & defer
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-06-28 00:00:00" itemprop="dateCreated datePublished" datetime="2021-06-28T00:00:00+08:00">2021-06-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-07-27 22:15:12" itemprop="dateModified" datetime="2021-07-27T22:15:12+08:00">2021-07-27</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/modern-C/" itemprop="url" rel="index"><span itemprop="name">modern C++</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p><strong>参考资料</strong>: </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/32432450/what-is-standard-defer-finalizer-implementation-in-c">What is standard defer/finalizer implementation in C++?</a></li>
+<li><a target="_blank" rel="noopener" href="http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c30-define-a-destructor-if-a-class-needs-an-explicit-action-at-object-destruction">The C++ Core Guidelines: <code>gsl::finally</code></a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/microsoft/GSL/blob/ebe7ebfd855a95eb93783164ffb342dbd85cbc27/include/gsl/gsl_util#L53-L89">Microsoft的 GSL实现</a></li>
+</ul>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>有一个发布 binder service的 server, 和 bind到 server的多个 client. server端有多个 binder线程, 可以<strong>同时</strong>为多个 client执行 RPC. 如果此时 server正在退出(进入析构函数), 而同时还有 client正在执行 RPC, 可能就会出现问题. 虽然可能有其他更合理, 优雅的方式避免这个问题, 但我的直接粗暴的想法是: <strong>当 server退出时, 等待当前正在执行的 RPC完成</strong>. </p>
+<p>逻辑大概是这样: server维护一个正在执行 RPC的 client的数量 (<code>std::atomic_int doing_rpc_</code>), 执行 RPC之前该值加一, 执行完成之后减一. 当 server已经进入了析构函数, 等待 <code>doing_rpc_</code>的值变为0(表示没有 client在执行 RPC), 然后才继续析构. 代码如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Service</span> :</span> <span class="keyword">public</span> BnService &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::<span class="keyword">atomic_int</span> doing_rpc_ = <span class="number">0</span>;     <span class="comment">// 相当于reference count</span></span><br><span class="line">    std::<span class="keyword">atomic_bool</span> in_dtor_ = <span class="literal">false</span>;  <span class="comment">// 是否进入了析构函数?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Service::~<span class="built_in">Service</span>() &#123;</span><br><span class="line">    in_dtor_.<span class="built_in">store</span>(<span class="literal">true</span>);  <span class="comment">// 声明已经进入析构函数</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals;</span><br><span class="line">    <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (doing_rpc_.<span class="built_in">load</span>());   <span class="comment">// wait all RPC done, max 1s</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// clean resource</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">::<span class="function">ndk::ScopedAStatus  <span class="title">Service::doRpc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (in_dtor_.<span class="built_in">load</span>()) &#123;  <span class="comment">// 如果server正在退出, 则不再执行RPC</span></span><br><span class="line">        <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ++doing_rpc_;  <span class="comment">// 增加 reference count</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line"></span><br><span class="line">	--doing_rpc_;  <span class="comment">// 减少 reference count</span></span><br><span class="line">    <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="问题-amp-分析"><a href="#问题-amp-分析" class="headerlink" title="问题 &amp; 分析"></a>问题 &amp; 分析</h2><p>在 <code>doRpc</code>函数里, 一开始时需要手动增加 <code>doing_rpc_</code>, 在结束时需要手动减少 <code>doing_rpc_</code>. 这就引入了一个问题: 如果在函数里提前退出(发生异常, 或者在中间某个位置提前 <code>return</code>), <code>doing_rpc_</code>的值就永远不会变为0, 析构函数将会陷入死循环 (<em>虽然可以加入最长等待时间限制来避免这个问题</em>).</p>
+<p>这其实可以扩展为一个更典型的问题: 即”资源”的获取(acquire)和释放(release). 比如内存的分配与释放(<code>malloc</code>/<code>free</code> 或 <code>new</code>/<code>delete</code>), 锁 (<code>mutex</code>)的加锁与解锁(lock/unlock), 文件 (<code>FILE *</code> 或 <code>fd</code>)或设备(device)的打开与关闭(open/close).</p>
+<p>可以发现, 对资源的操作都是成对的(paired). 如果手动管理这种资源, 即手动申请与释放, 是非常容易出错的, 稍不留意就会忘记释放操作, 就像上面的代码那样. 因此, 需要一种方式, 把获取到的资源托管给”它”, 让”它”在合适的位置自动释放资源. </p>
+<p>或者更通用一点, 需要一种机制, <strong>可以把某个动作(比如释放资源)推迟到之后的某个时间点执行, 而且需要保证这个动作一定会被执行</strong>. 类似于 <code>scope guard</code>这样的概念.</p>
+<p>Java和 Python有 <code>finally</code>语句块, Golang有 <code>defer</code>可以达到上述的功能.</p>
+<p>而 C++的解决方法是 <code>RAII(Resource Acquisiton Is Initialization)</code>.  其基本原理是: <strong>C++的类都有构造和析构函数, 在类的生命期一开始, 保证先执行构造函数. 而且在类的生命期结束时, 可以保证它的析构函数被执行. 因此就可以把成对的(paired)操作拆分开来, 一个放到构造函数里面执行, 另一个放到析构函数里面执行</strong>.<code>std::lock_guard</code> 和 <code>std::shared_ptr</code>都是使用 <code>RAII</code>的典范.</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>那么怎样使用 <code>RAII</code>的方式来修改上述代码? </p>
+<h3 id="std-shared-ptr"><a href="#std-shared-ptr" class="headerlink" title="std::shared_ptr"></a><code>std::shared_ptr</code></h3><p><strong>C++ primer</strong> 第12章讲 <code>shared_ptr</code>时提到, 在创建 <code>shared_ptr</code>时, 可以传递一个自定义的删除器(deleter)给它:</p>
+<img src="/2021/06/28/defer-scope_guard/image-20210627112700564.png" alt="image-20210627112700564" style="zoom: 80%;">
+
+<p>需要注意删除器的函数签名需要为 <code>void (T *)</code>, 参数<code>T *</code>就是交给 <code>shared_ptr</code>托管的”资源”(不一定是动态分配的内存, 它可以是广义上的资源).</p>
+<p>使用 <code>shared_ptr</code>的方案如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">::<span class="function">ndk::ScopedAStatus  <span class="title">Service::doRpc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (in_dtor_.<span class="built_in">load</span>()) &#123;  <span class="comment">// 如果server正在退出, 则不再执行 RPC</span></span><br><span class="line">        <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ++doing_rpc_;  <span class="comment">// 增加 reference count</span></span><br><span class="line">    <span class="function">std::shared_ptr&lt;<span class="keyword">void</span>&gt; <span class="title">guard</span><span class="params">(<span class="literal">nullptr</span>, [&amp;doing_rpc_] (...) &#123;</span></span></span><br><span class="line"><span class="params"><span class="function">        --doing_rpc_;</span></span></span><br><span class="line"><span class="params"><span class="function">    &#125;)</span></span>;</span><br><span class="line">    <span class="comment">// 或者</span></span><br><span class="line">    <span class="comment">//std::shared_ptr&lt;std::atomic_int&gt; guard(&amp;doing_rpc_, [](std::atomic_int *rpc) &#123;</span></span><br><span class="line">    <span class="comment">//    --(*rpc);</span></span><br><span class="line">    <span class="comment">//&#125;);</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line">    <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ScopeGuard"><a href="#ScopeGuard" class="headerlink" title="ScopeGuard"></a><code>ScopeGuard</code></h3><p>借助 <code>RAII</code>思想, 可以实现一个通用的 <code>RAII wrapper class</code>, 比如(下面这种方式有点 naive &amp; trivial):</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">T</span>&gt;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ScopeGuard</span> &#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="built_in">ScopeGuard</span>(T closure) : _closure(std::<span class="built_in">move</span>(closure)) &#123;&#125;</span><br><span class="line">    ~<span class="built_in">ScopeGuard</span>() &#123; _closure(); &#125;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    T _closure;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p> 我想看一下 C++标准库里有没有类似的实现, 但是很遗憾并没有, 只有这个东西: <code>std::experimental::scope_exit</code>. 虽然它能达到所需的效果, 但是它并不属于标准库的内容. 而且使用 8.4.0 版本的 g++编译会报错.</p>
+<p>在 StackOverflow上使用 “C++ scope_guard” 和 “C++ defer”关键字搜索, 也可以找到<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/32432450/what-is-standard-defer-finalizer-implementation-in-c">许多很好的实现</a>.</p>
+<h3 id="gsl-finally"><a href="#gsl-finally" class="headerlink" title="gsl::finally"></a><code>gsl::finally</code></h3><p><a target="_blank" rel="noopener" href="http://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#c30-define-a-destructor-if-a-class-needs-an-explicit-action-at-object-destruction">The C++ Core Guidelines</a> 提出一种方式 <code>gsl::finally</code>:</p>
+<img src="/2021/06/28/defer-scope_guard/image-20210627113947634.png" alt="image-20210627113947634" style="zoom:67%;">
+
+<p>下面是其一种<a target="_blank" rel="noopener" href="https://github.com/microsoft/GSL/blob/ebe7ebfd855a95eb93783164ffb342dbd85cbc27/include/gsl/gsl_util#L53-L89">实际的实现</a>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// final_act allows you to ensure something gets run at the end of a scope</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">F</span>&gt;</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">final_act</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line"><span class="keyword">public</span>:</span><br><span class="line">    <span class="function"><span class="keyword">explicit</span> <span class="title">final_act</span><span class="params">(F f)</span> <span class="keyword">noexcept</span> : f_(std::move(f)), invoke_(true) &#123;</span>&#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">final_act</span>(final_act&amp;&amp; other) <span class="keyword">noexcept</span> : <span class="built_in">f_</span>(std::<span class="built_in">move</span>(other.f_)), <span class="built_in">invoke_</span>(other.invoke_)</span><br><span class="line">    &#123;</span><br><span class="line">        other.invoke_ = <span class="literal">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="built_in">final_act</span>(<span class="keyword">const</span> final_act&amp;) = <span class="keyword">delete</span>;</span><br><span class="line">    final_act&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> final_act&amp;) = <span class="keyword">delete</span>;</span><br><span class="line"></span><br><span class="line">    ~<span class="built_in">final_act</span>() <span class="keyword">noexcept</span></span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (invoke_) <span class="built_in">f_</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    F f_;</span><br><span class="line">    <span class="keyword">bool</span> invoke_;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// finally() - convenience function to generate a final_act</span></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">F</span>&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> final_act&lt;F&gt; <span class="title">finally</span><span class="params">(<span class="keyword">const</span> F&amp; f)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> final_act&lt;F&gt;(f);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">template</span> &lt;<span class="class"><span class="keyword">class</span> <span class="title">F</span>&gt;</span></span><br><span class="line"><span class="function"><span class="keyword">inline</span> final_act&lt;F&gt; <span class="title">finally</span><span class="params">(F&amp;&amp; f)</span> <span class="keyword">noexcept</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">return</span> final_act&lt;F&gt;(std::forward&lt;F&gt;(f));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用 <code>gsl::finally</code>的方案如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">::<span class="function">ndk::ScopedAStatus  <span class="title">Service::doRpc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (in_dtor_.<span class="built_in">load</span>()) &#123;  <span class="comment">// 如果server正在退出, 则不再执行 RPC</span></span><br><span class="line">        <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ++doing_rpc_;  <span class="comment">// 增加 reference count</span></span><br><span class="line">    <span class="function">gsl::finally <span class="title">guard</span><span class="params">([&amp;doing_rpc_]() &#123;</span></span></span><br><span class="line"><span class="params"><span class="function">        --doing_rpc_;</span></span></span><br><span class="line"><span class="params"><span class="function">    &#125;)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line">    <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/modern-C/" rel="tag"># modern C++</a>
+              <a href="/tags/RAII/" rel="tag"># RAII</a>
+              <a href="/tags/Android/" rel="tag"># Android</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/05/27/bootloader/" rel="prev" title="firmware & bootloader">
+      <i class="fa fa-chevron-left"></i> firmware & bootloader
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/07/11/CS144-network-lab/" rel="next" title="CS144 Lab Assignments 实验笔记">
+      CS144 Lab Assignments 实验笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98-amp-%E5%88%86%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">问题 &amp; 分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">3.</span> <span class="nav-text">解决方案</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#std-shared-ptr"><span class="nav-number">3.1.</span> <span class="nav-text">std::shared_ptr</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ScopeGuard"><span class="nav-number">3.2.</span> <span class="nav-text">ScopeGuard</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#gsl-finally"><span class="nav-number">3.3.</span> <span class="nav-text">gsl::finally</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yl.chen</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YsLn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YsLn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yl.chen</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

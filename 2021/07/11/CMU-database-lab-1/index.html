@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Sans Serif:300,300italic,400,400italic,700,700italic|Serif:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Fira Code:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.  背景这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 SYLLABUS.    基本概念数据库(database)是对现实世界的某些方面进行建模的相互关联(inter-related)的">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CMU DBMS实验笔记">
+<meta property="og:url" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/index.html">
+<meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.  背景这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 SYLLABUS.    基本概念数据库(database)是对现实世界的某些方面进行建模的相互关联(inter-related)的">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210704122337806.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711102154382.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210710201646108.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210710221457865.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210710224448826.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210710222530431.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711104011473.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210710224448826.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711000433227.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711000151610.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210728222642076.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711000758745.png">
+<meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711001323309.png">
+<meta property="article:published_time" content="2021-07-10T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-07-28T14:54:13.334Z">
+<meta property="article:author" content="yl.chen">
+<meta property="article:tag" content="modern C++">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210704122337806.png">
+
+<link rel="canonical" href="https://ysln.github.io/2021/07/11/CMU-database-lab-1/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>CMU DBMS实验笔记 | cyl's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">cyl's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/07/11/CMU-database-lab-1/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CMU DBMS实验笔记
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-07-11 00:00:00" itemprop="dateCreated datePublished" datetime="2021-07-11T00:00:00+08:00">2021-07-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-07-28 22:54:13" itemprop="dateModified" datetime="2021-07-28T22:54:13+08:00">2021-07-28</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CMU-DBMS-Lab/" itemprop="url" rel="index"><span itemprop="name">CMU DBMS Lab</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文是在完成 <strong><a target="_blank" rel="noopener" href="https://15445.courses.cs.cmu.edu/fall2020/">卡耐基梅隆大学 数据库实验</a></strong> 过程中的一些记录.</p>
+</blockquote>
+<blockquote>
+<p>如果遇到问题, 可以去 <a href="https://link.zhihu.com/?target=https://discord.gg/YF7dMCg">Discord channel</a> 寻求帮助.</p>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 <a target="_blank" rel="noopener" href="https://15445.courses.cs.cmu.edu/fall2020/syllabus.html">SYLLABUS</a>. </p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210704122337806.png" alt="image-20210704122337806" style="zoom: 50%;">
+
+<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>数据库(database)是对现实世界的某些方面进行建模的相互关联(inter-related)的数据的有组织(organized)的集合. DBMS是管理database的软件, 用于定义(define), 创建(create), 查询(query), 更新(update)和管理(administrate)数据库.</p>
+<p>数据模型(data model)是描述数据库中的数据的概念集合.  <strong>relational model</strong>是其中一种data model, 它主要定义了三种概念:</p>
+<ul>
+<li><strong>Structure</strong>. 关系(relations)及其内容(content)的定义. 描述了关系(relations)所拥有的属性(attributes)以及这些属性可以拥有的值(values). <em>通俗理解: 数据结构.</em></li>
+<li><strong>Integrity</strong>. 确保数据库的内容满足约束. 比如年份(year)必须是一个整数.</li>
+<li><strong>Manipulation</strong>. 怎样访问和修改数据库的内容.</li>
+</ul>
+<p><strong>relation</strong>是一个<strong>无序集合, 包含了一系列的属性</strong>, 用于描述表的条目. A relation with n attributes is called an <strong>n-ary relation</strong>. <del>个人理解: 比如对于描述学生的一个表, relation可以为(name, age, GPA), 这些属性之间是没有顺序的, 也可以按照(GPA, name, age)的形式来存储, 这取决于DBMS的实现, 可以优化(比如内存对齐).</del></p>
+<p><strong>tuple</strong>是relation中属性值的集合, 也叫做 <strong>record</strong>. 比如对于上面那个描述学生的表, relation为(name, age, GPA), 那么表示Tony这个学生的tuple为(“Tony”, 23, 3.9). <em>通俗理解: 表的一行(row)</em>.</p>
+<blockquote>
+<p>怎么理解 <strong>relational model</strong> 是无序的(unordered)? 属性之间无序? 比如 (name, age, GPA) 和 (GPA, name, age). 还是tuple之间无序? 比如 (“Tony”, 23, 3.9) 和 (“cyl”, 23, 3.7) 这两个tuple是无序的.</p>
+</blockquote>
+<h2 id="PROJECT-0-C-PRIMER"><a href="#PROJECT-0-C-PRIMER" class="headerlink" title="PROJECT #0 - C++ PRIMER"></a>PROJECT #0 - C++ PRIMER</h2><blockquote>
+<p><em>Any student that is unable to complete this assignment before the deadline will be asked to drop the course.</em></p>
+</blockquote>
+<p>这个实验不计入成绩, 只是作为热身, 考察C++的基础知识. 如果无法完成该实验, 建议退课. </p>
+<p>这门课程的所有实验都要求使用 modern C++, 最起码C++11, C++17也支持. 课程对编码风格要求很严格, 建议遵从<a target="_blank" rel="noopener" href="https://google.github.io/styleguide/cppguide.html">Google的C++编码规范</a>. 在完成实验之后, 提交代码之前, 需要使用以下命令来格式化代码, 并检查代码是否规范:</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> make format      <span class="comment"># clang-format</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> make check-lint  <span class="comment"># cpplint</span></span></span><br><span class="line"><span class="meta">$</span><span class="bash"> make check-clang-tidy</span></span><br></pre></td></tr></table></figure>
+
+<p>该课程使用 <a target="_blank" rel="noopener" href="https://www.gradescope.com/">Gradescope</a> 作为评测系统, 非CMU学生可以使用这个课程码: 5VX7JZ. 提交代码前, 仔细阅读实验规范, 把指定的文件打包成<code>zip</code>后提交.</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210711102154382.png" alt="image-20210711102154382" style="zoom:67%;">
+
+<h3 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h3><ul>
+<li><code>unique_ptr</code>无法赋值, 但是可以<code>move</code>.</li>
+<li><code>Matrix</code>是模板类, <code>RowMatrix</code>是其派生类. <code>RowMatrix</code>如果想要访问<code>Matrix</code>的<code>protected</code>的成员变量, 需要按照这种格式: <code>Matrix&lt;T&gt;::rows</code>.</li>
+</ul>
+<h2 id="PROJECT-1-BUFFER-POOL"><a href="#PROJECT-1-BUFFER-POOL" class="headerlink" title="PROJECT #1 - BUFFER POOL"></a>PROJECT #1 - BUFFER POOL</h2><h3 id="实验背景"><a href="#实验背景" class="headerlink" title="实验背景"></a>实验背景</h3><blockquote>
+<p>这个实验, <del>或者说这个课程最终要实现的东西</del> 非常像 <a target="_blank" rel="noopener" href="https://pdos.csail.mit.edu/6.828/2012/xv6/book-rev7.pdf">xv6的文件系统</a>, 它甚至也有logging和recovery. <em>说到文件系统, NJU OS的文件系统我到现在只完成了makefs这个工具…</em></p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210710201646108.png" alt="image-20210710201646108" style="zoom: 80%;">
+
+<p><strong>Buffer Cache就相当于PROJECT #1要实现的Buffer Pool.</strong></p>
+</blockquote>
+<p>这门课主要讨论“disk-oriented” DBMS架构, 即数据库文件持久化存储在非易失( non-volatile)的磁盘上. jyy说过<strong>文件系统是存储在磁盘上的数据结构</strong>, 数据库文件也是如此. 为了操作该数据结构, DBMS需要把它读到物理内存中. 即把数据在磁盘和物理内存之间搬运. 一旦涉及到磁盘I/O, 情况就不是很乐观. 众所周知, 磁盘I/O是非常耗时的:</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210710221457865.png" alt="image-20210710221457865" style="zoom:50%;">
+
+<p>因此, DBMS提供了Buffer Pool这种机制来减少频繁的磁盘I/O, 其背后的思想就是计算机系统中十分经典且万能的<strong>Cache, 缓存</strong>. </p>
+<p>具体做法如下: Buffer Pool维护一片较小的物理内存(比如几百MiB), 作为存储在磁盘上的数据库文件(可能几个GiB)的缓存. 当系统中的其他部分想要读写数据库的数据时, Buffer Pool首先查找Cache中是否已经缓存(通过一个映射表, “页表”), 若缓存命中, 直接返回. 反之, 把磁盘上的数据读到Cache中(必要时需要牺牲Cache中的某些页面, LRU).</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210710224448826.png" alt="image-20210710224448826" style="zoom:50%;">
+
+<p>等等, 页表, swap-in/swap-out, LRU, 这不就是 <strong>虚拟内存(virtual memory)</strong> 吗? 确实如此, Buffer Pool想要实现的功能, 借助操作系统提供的虚拟内存也能实现, 比如<code>mmap</code>. 也确实有一些数据库是这么做的.</p>
+<p>但是这有什么弊端呢? 讲义是这么说的, <em>我不是很理解这个问题</em>:</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210710222530431.png" alt="image-20210710222530431" style="zoom: 67%;">
+
+<p>考虑到正确性, 性能等原因, DBMS应该自己掌控Cache. 操作系统提供的虚拟内存是一种通用的机制, 以OS的视角来看, 它只知道自己在读写磁盘文件, 对于具体的文件数据类型, OS不知道, 也不关心. 但是DBMS知道数据库文件是什么(因为就是由DBMS来解释数据库文件), 它可以对此提供更精细的控制(<em>比如???</em>).</p>
+<blockquote>
+<p>老师在课上有如下的比喻: 操作系统提供的虚拟内存好比大卡车, 而DBMS就像跑车.</p>
+</blockquote>
+<p>此外, 对于磁盘文件的操作都是通过OS提供的文件系统API, 比如<code>read</code>/<code>write</code>, 而<strong>文件系统也有自己的缓存(xv6文件系统的Buffer Cache)</strong>. 但是DBMS通过Buffer Pool来管理数据库文件的缓存. 为了避免冗余的文件副本以及两者不同的页面替换策略带来的影响, <strong>DBMS使用direct I/O绕过操作系统的缓存</strong>.</p>
+<blockquote>
+<p>在代码里的体现就是<code>sync</code>, <code>fsync</code>, 或者<code>fflush</code>.</p>
+</blockquote>
+<h3 id="实验内容"><a href="#实验内容" class="headerlink" title="实验内容"></a>实验内容</h3><h4 id="TASK-1-LRU-REPLACEMENT-POLICY"><a href="#TASK-1-LRU-REPLACEMENT-POLICY" class="headerlink" title="TASK #1 - LRU REPLACEMENT POLICY"></a>TASK #1 - LRU REPLACEMENT POLICY</h4><p>Buffer Pool只有有限的物理内存, 当缓存不够, 而又要从磁盘读取新的page到缓存中时, 通过LRU策略来替换最近最少使用的page.</p>
+<p>如何体现”最近”和”最少”? 一开始我的想法是为每个page维持两个变量: refcount和timestamp. 当要选择一个victim page时, 选择refcount最小的, 如果refcount相同, 选择timestamp最老的. 但是仔细想想就能发现这种算法是错误的.</p>
+<p><strong>其实只需要维持一个timestamp就行. 每当一个page被访问时, 更新该页面的timestamp. 当要选择一个victim page时, 选择timestamp最老的page.</strong> 也就是说, 只需要一个队列就可以达到目的, 当一个page被访问时, 把它移到队列的头部, 当要选择一个victim page时, 从队列尾部移除.</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210711104011473.png" alt="image-20210711104011473">
+
+<blockquote>
+<p>参考资料: <a target="_blank" rel="noopener" href="https://www.geeksforgeeks.org/lru-cache-implementation/">LRU Cache Implementation - GeeksforGeeks</a></p>
+</blockquote>
+<p>需要实现<code>LRUReplacer</code>这个类. 具体实现时选取的数据结构如下:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">std::list&lt;<span class="keyword">frame_id_t</span>&gt; unpinned_buffer_;</span><br><span class="line">std::unordered_map&lt;<span class="keyword">frame_id_t</span>, std::pair&lt;<span class="keyword">bool</span>, std::list&lt;<span class="keyword">frame_id_t</span>&gt;::iterator&gt;&gt; lookup_tab_;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p><code>unpinned_buffer_</code>存储当前可以牺牲的frame, 从头部插入, 从尾部移除.</p>
+</li>
+<li><p><code>lookup_tab_</code>存储当前追踪的所有frame, 包括被pin住的和未被pin住的, key为frame id, value为<code>std::pair</code>, 它的第一个元素的含义是该frame是否被pin住, 第二个元素代表该frame在<code>unpinned_buffer_</code>中的位置(只有当该frame未被pin住才有意义, 因为被pin住的frame会从<code>unpinned_buffer_</code>中移除).</p>
+</li>
+</ul>
+<p>关于frame和page的含义参考下图:</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210710224448826.png" alt="image-20210710224448826" style="zoom:50%;">
+
+<p>关于pin和unpin这两个操作的含义:</p>
+<ul>
+<li>pin: 表示接下来我需要读写该frame中的page, 你不能把它替换出去.</li>
+<li>unpin: 操作完毕, 你可以把它替换出去(并不表示你现在就要把它替换出去).</li>
+</ul>
+<p>为什么选择<code>bool</code>来作为frame是否被pin住, 而不是选择<code>int</code>来表示frame的pin count? <strong>由<code>BufferPoolManager</code>来管理page的pin count, 当其pin count为0是, 调用<code>LRUReplacer::Unpin</code>.</strong></p>
+<p>注意点:</p>
+<ul>
+<li>调用<code>LRUReplacer::Unpin</code>来把一个frame交给<code>LRUReplacer</code>追踪.</li>
+</ul>
+<h4 id="TASK-2-BUFFER-POOL-MANAGER"><a href="#TASK-2-BUFFER-POOL-MANAGER" class="headerlink" title="TASK #2 - BUFFER POOL MANAGER"></a>TASK #2 - BUFFER POOL MANAGER</h4><p>实现<code>BufferPoolManager</code>. 注意点:</p>
+<ul>
+<li><p>当从磁盘中读取一个<strong>新的page</strong>到Buffer Pool时(<code>BufferPoolManager::FetchPageImpl</code>和<code>BufferPoolManager::NewPageImpl</code>), <strong>需要把该page对应的frame id交给<code>LRUReplacer</code>追踪, 然后把该frame pin住, 并增加该page的pin count</strong>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">replacer_-&gt;<span class="built_in">Unpin</span>(frame_id);  <span class="comment">// unpin it first! add it to replacer!</span></span><br><span class="line">replacer_-&gt;<span class="built_in">Pin</span>(frame_id);    <span class="comment">// pin it via replacer</span></span><br></pre></td></tr></table></figure></li>
+<li><p><code>BufferPoolManager::UnpinPageImpl</code>: </p>
+<ul>
+<li>如果该page不在page table中, 需要返回<code>true</code>. </li>
+<li>如果该page的pin count已经为0, 直接返回<code>false</code>.</li>
+<li> 如果该page的pin count不为0, 递减pin count, 如果递减后达到0, 需要调用<code>LRUReplacer::Unpin</code>.</li>
+</ul>
+</li>
+</ul>
+<h4 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h4><p>实验中的数据库文件就是<code>.db</code>文件, 文件按照page组织, 每个page大小为<code>PAGE_SIZE</code>(4096字节). 读写<code>.db</code>文件时, 需要指定page id(从0开始的整数), <code>DiskManager</code>会定位到相应的offset, 读写<code>PAGE_SIZE</code>大小的数据. <em>talk is cheap, show me the code</em>:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Write the contents of the specified page into disk file</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">DiskManager::WritePage</span><span class="params">(<span class="keyword">page_id_t</span> page_id, <span class="keyword">const</span> <span class="keyword">char</span> *page_data)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">size_t</span> offset = <span class="keyword">static_cast</span>&lt;<span class="keyword">size_t</span>&gt;(page_id) * PAGE_SIZE;  <span class="comment">// 计算offset</span></span><br><span class="line">  db_io_.<span class="built_in">seekp</span>(offset);  <span class="comment">// set write cursor to offset</span></span><br><span class="line">  db_io_.<span class="built_in">write</span>(page_data, PAGE_SIZE);</span><br><span class="line">  <span class="comment">// 省略一些代码...</span></span><br><span class="line">  db_io_.<span class="built_in">flush</span>();  <span class="comment">// needs to flush to keep disk file in sync</span></span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Read the contents of the specified page into the given memory area</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">DiskManager::ReadPage</span><span class="params">(<span class="keyword">page_id_t</span> page_id, <span class="keyword">char</span> *page_data)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> offset = page_id * PAGE_SIZE;  <span class="comment">// 计算offset</span></span><br><span class="line">  <span class="comment">// 省略一些代码...</span></span><br><span class="line">  db_io_.<span class="built_in">seekp</span>(offset);  <span class="comment">// set read cursor to offset</span></span><br><span class="line">  db_io_.<span class="built_in">read</span>(page_data, PAGE_SIZE);</span><br><span class="line">  <span class="comment">// 省略一些代码...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="通关截图"><a href="#通关截图" class="headerlink" title="通关截图"></a>通关截图</h3><img src="/2021/07/11/CMU-database-lab-1/image-20210711000433227.png" alt="image-20210711000433227" style="zoom:67%;">
+
+<img src="/2021/07/11/CMU-database-lab-1/image-20210711000151610.png" alt="image-20210711000151610" style="zoom:80%;">
+
+<blockquote>
+<p><em>2021/07/28 更新:</em></p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210728222642076.png" alt="image-20210728222642076">
+</blockquote>
+<h3 id="GDB调试"><a href="#GDB调试" class="headerlink" title="GDB调试"></a>GDB调试</h3><p>gdb调试时, 如果使用<code>layout src</code>无法查看动态链接库的源代码, 首先确保编译时使用了<code>-g</code>或<code>-ggdb</code>选项, 然后在gdb中, 在程序运行之前(<code>r</code>), 使用以下指令:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">(gdb) set directories /Path/To/SourceOfSharedLib</span><br><span class="line">(gdb) set solib-search-path /Path/To/SharedLib</span><br></pre></td></tr></table></figure>
+
+<p>参考: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/37641967/how-to-debug-a-shared-library-using-gdb">How to debug a shared library using GDB?</a></p>
+<h3 id="坑"><a href="#坑" class="headerlink" title="坑!"></a>坑!</h3><p><strong>这个实验并不难, 但是GradeScope评测系统太坑了!</strong></p>
+<p>代码在本地编译运行没有任何问题, 但是提交到GradeScope之后报错:</p>
+<img src="/2021/07/11/CMU-database-lab-1/image-20210711000758745.png" alt="image-20210711000758745" style="zoom:80%;">
+
+<p>一点可用的调试信息也没有. 我用尽了各种方法, 提交了40次, 几乎都是这样. 我不知道是编译没通过, 还是运行时crash, 还是运行超时. 但我在本地明明可以编译运行通过, 而且代码格式也检查了. </p>
+<p>直到我看到这个帖子: <a target="_blank" rel="noopener" href="https://discord.com/channels/724929902075445281/752767235600285797/796269492636090408">p1-2020-buffer_pool_manager (discord.com)</a></p>
+<p><img src="/2021/07/11/CMU-database-lab-1/image-20210711001323309.png" alt="image-20210711001323309"></p>
+<p>而正巧我也使用了这个语法…但是当我修改之后, GradeScope还是报同样的错误…</p>
+<p>然后我看到一个帖子说可以在初始代码的基础上, 一点一点添加代码, 直到GradeScope报错. 然后定位到了这里:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ret-&gt;second = &#123;<span class="literal">false</span>, unpinned_buffer_.<span class="built_in">begin</span>()&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>无语…以后还是<strong>少用些语法糖</strong>.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/modern-C/" rel="tag"># modern C++</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/11/CS144-network-lab/" rel="prev" title="CS144 Lab Assignments 实验笔记">
+      <i class="fa fa-chevron-left"></i> CS144 Lab Assignments 实验笔记
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5"><span class="nav-number">2.</span> <span class="nav-text">基本概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PROJECT-0-C-PRIMER"><span class="nav-number">3.</span> <span class="nav-text">PROJECT #0 - C++ PRIMER</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">3.1.</span> <span class="nav-text">注意事项</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PROJECT-1-BUFFER-POOL"><span class="nav-number">4.</span> <span class="nav-text">PROJECT #1 - BUFFER POOL</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E8%83%8C%E6%99%AF"><span class="nav-number">4.1.</span> <span class="nav-text">实验背景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9"><span class="nav-number">4.2.</span> <span class="nav-text">实验内容</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#TASK-1-LRU-REPLACEMENT-POLICY"><span class="nav-number">4.2.1.</span> <span class="nav-text">TASK #1 - LRU REPLACEMENT POLICY</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#TASK-2-BUFFER-POOL-MANAGER"><span class="nav-number">4.2.2.</span> <span class="nav-text">TASK #2 - BUFFER POOL MANAGER</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%B6%E4%BB%96"><span class="nav-number">4.2.3.</span> <span class="nav-text">其他</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E5%85%B3%E6%88%AA%E5%9B%BE"><span class="nav-number">4.3.</span> <span class="nav-text">通关截图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GDB%E8%B0%83%E8%AF%95"><span class="nav-number">4.4.</span> <span class="nav-text">GDB调试</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9D%91"><span class="nav-number">4.5.</span> <span class="nav-text">坑!</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yl.chen</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YsLn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YsLn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yl.chen</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
