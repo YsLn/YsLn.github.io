@@ -17,7 +17,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="参考资料:   2021 南京大学 “操作系统：设计与实现” (蒋炎岩)  JEFF DEAN的STANFORD演讲    前言在 CoolShell 上看到一篇文章, Jeff Dean 2010年在斯坦福大学的一场题为”Building Software Systems at Google and Lessons Learned”演讲中, 提到的 Numbers Everyone Shoul">
@@ -47,7 +47,7 @@
 <meta property="og:image" content="https://ysln.github.io/2021/05/08/spin-mutex-futex/image-20210403231651108.png">
 <meta property="og:image" content="https://ysln.github.io/2021/05/08/spin-mutex-futex/image-20210403232133401.png">
 <meta property="article:published_time" content="2021-05-07T16:00:00.000Z">
-<meta property="article:modified_time" content="2021-07-27T14:14:33.123Z">
+<meta property="article:modified_time" content="2021-08-11T10:18:36.139Z">
 <meta property="article:author" content="yl.chen">
 <meta property="article:tag" content="C">
 <meta property="article:tag" content="调试">
@@ -167,10 +167,6 @@
     </header>
 
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
 
 
     <main class="main">
@@ -215,7 +211,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-07-27 22:14:33" itemprop="dateModified" datetime="2021-07-27T22:14:33+08:00">2021-07-27</time>
+                <time title="Modified: 2021-08-11 18:18:36" itemprop="dateModified" datetime="2021-08-11T18:18:36+08:00">2021-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -260,6 +256,7 @@
 </blockquote>
 <p>上图中的数据最令我震惊的是<code>Mutex lock/unlock</code>居然只要<strong>25ns !</strong> </p>
 <p>但我在许多地方都看到过这样的言论: <em>“加锁操作的开销是昂贵的, 加锁可能导致性能下降”</em>. 所以我一直以为<code>lock/unlock</code>操作开销至少也得几百微秒, 甚至毫秒级. 但上图颠覆了我的认知, 于是, 亲自做个实验验证一下.</p>
+<p><em><span id="more"></span></em></p>
 <h2 id="mutex的开销"><a href="#mutex的开销" class="headerlink" title="mutex的开销"></a>mutex的开销</h2><p>测试的代码如下, 只是单纯的在<strong>单线程</strong>程序中进行N次<code>lock/unlock</code>操作, 统计花费的时间:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdlib.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;unistd.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;time.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;pthread.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> N 100000</span></span><br><span class="line"><span class="keyword">pthread_mutex_t</span> mutex;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    pthread_mutex_init(&amp;mutex, <span class="literal">NULL</span>);</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">start</span>;</span></span><br><span class="line">    clock_gettime(CLOCK_REALTIME, &amp;start);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; N; ++i) &#123;</span><br><span class="line">        pthread_mutex_lock(&amp;mutex);</span><br><span class="line">        pthread_mutex_unlock(&amp;mutex);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">timespec</span> <span class="title">end</span>;</span></span><br><span class="line">    clock_gettime(CLOCK_REALTIME, &amp;end);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">long</span> time = (end.tv_sec - <span class="number">1</span> - start.tv_sec) * <span class="number">1000000000</span></span><br><span class="line">                + (end.tv_nsec + <span class="number">1000000000</span> - start.tv_nsec);</span><br><span class="line"></span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">&quot;Test lock/unlock for [%d] times.\n&quot;</span></span><br><span class="line">            <span class="string">&quot;Total takes [%ld] ns.\n&quot;</span></span><br><span class="line">            <span class="string">&quot;One cycle takes [%ld] ns.\n&quot;</span>, N, time, time / N);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -382,6 +379,23 @@
     
     
     
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>yl.chen
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://ysln.github.io/2021/05/08/spin-mutex-futex/" title="spinlock &amp; mutex &amp; futex">https://ysln.github.io/2021/05/08/spin-mutex-futex/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
 
       <footer class="post-footer">
           <div class="post-tags">
@@ -477,7 +491,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -504,6 +518,10 @@
 
 
       </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
 
     </div>
   </aside>

@@ -17,7 +17,7 @@
 
 <script id="hexo-configurations">
     var NexT = window.NexT || {};
-    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
   <meta name="description" content="参考资料:   What is standard defer&#x2F;finalizer implementation in C++? The C++ Core Guidelines: gsl::finally Microsoft的 GSL实现   背景有一个发布 binder service的 server, 和 bind到 server的多个 client. server端有多个 binder线程,">
@@ -30,7 +30,7 @@
 <meta property="og:image" content="https://ysln.github.io/2021/06/28/defer-scope_guard/image-20210627112700564.png">
 <meta property="og:image" content="https://ysln.github.io/2021/06/28/defer-scope_guard/image-20210627113947634.png">
 <meta property="article:published_time" content="2021-06-27T16:00:00.000Z">
-<meta property="article:modified_time" content="2021-07-27T14:15:12.216Z">
+<meta property="article:modified_time" content="2021-08-11T10:18:12.133Z">
 <meta property="article:author" content="yl.chen">
 <meta property="article:tag" content="modern C++">
 <meta property="article:tag" content="RAII">
@@ -148,10 +148,6 @@
     </header>
 
     
-  <div class="back-to-top">
-    <i class="fa fa-arrow-up"></i>
-    <span>0%</span>
-  </div>
 
 
     <main class="main">
@@ -196,7 +192,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-07-27 22:15:12" itemprop="dateModified" datetime="2021-07-27T22:15:12+08:00">2021-07-27</time>
+                <time title="Modified: 2021-08-11 18:18:12" itemprop="dateModified" datetime="2021-08-11T18:18:12+08:00">2021-08-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -229,6 +225,7 @@
 </blockquote>
 <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>有一个发布 binder service的 server, 和 bind到 server的多个 client. server端有多个 binder线程, 可以<strong>同时</strong>为多个 client执行 RPC. 如果此时 server正在退出(进入析构函数), 而同时还有 client正在执行 RPC, 可能就会出现问题. 虽然可能有其他更合理, 优雅的方式避免这个问题, 但我的直接粗暴的想法是: <strong>当 server退出时, 等待当前正在执行的 RPC完成</strong>. </p>
 <p>逻辑大概是这样: server维护一个正在执行 RPC的 client的数量 (<code>std::atomic_int doing_rpc_</code>), 执行 RPC之前该值加一, 执行完成之后减一. 当 server已经进入了析构函数, 等待 <code>doing_rpc_</code>的值变为0(表示没有 client在执行 RPC), 然后才继续析构. 代码如下:</p>
+<p><em><span id="more"></span></em></p>
 <figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Service</span> :</span> <span class="keyword">public</span> BnService &#123;</span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">    std::<span class="keyword">atomic_int</span> doing_rpc_ = <span class="number">0</span>;     <span class="comment">// 相当于reference count</span></span><br><span class="line">    std::<span class="keyword">atomic_bool</span> in_dtor_ = <span class="literal">false</span>;  <span class="comment">// 是否进入了析构函数?</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">Service::~<span class="built_in">Service</span>() &#123;</span><br><span class="line">    in_dtor_.<span class="built_in">store</span>(<span class="literal">true</span>);  <span class="comment">// 声明已经进入析构函数</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">using</span> <span class="keyword">namespace</span> std::chrono_literals;</span><br><span class="line">    <span class="keyword">int</span> count = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (doing_rpc_.<span class="built_in">load</span>());   <span class="comment">// wait all RPC done, max 1s</span></span><br><span class="line"></span><br><span class="line">	<span class="comment">// clean resource</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">::<span class="function">ndk::ScopedAStatus  <span class="title">Service::doRpc</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (in_dtor_.<span class="built_in">load</span>()) &#123;  <span class="comment">// 如果server正在退出, 则不再执行RPC</span></span><br><span class="line">        <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    ++doing_rpc_;  <span class="comment">// 增加 reference count</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// do something</span></span><br><span class="line">    <span class="comment">// ......</span></span><br><span class="line"></span><br><span class="line">	--doing_rpc_;  <span class="comment">// 减少 reference count</span></span><br><span class="line">    <span class="keyword">return</span> ScopedAStatus::<span class="built_in">ok</span>();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <h2 id="问题-amp-分析"><a href="#问题-amp-分析" class="headerlink" title="问题 &amp; 分析"></a>问题 &amp; 分析</h2><p>在 <code>doRpc</code>函数里, 一开始时需要手动增加 <code>doing_rpc_</code>, 在结束时需要手动减少 <code>doing_rpc_</code>. 这就引入了一个问题: 如果在函数里提前退出(发生异常, 或者在中间某个位置提前 <code>return</code>), <code>doing_rpc_</code>的值就永远不会变为0, 析构函数将会陷入死循环 (<em>虽然可以加入最长等待时间限制来避免这个问题</em>).</p>
@@ -265,6 +262,23 @@
     
     
     
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>yl.chen
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://ysln.github.io/2021/06/28/defer-scope_guard/" title="ScopeGuard &amp; defer">https://ysln.github.io/2021/06/28/defer-scope_guard/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
 
       <footer class="post-footer">
           <div class="post-tags">
@@ -358,7 +372,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">10</span>
+          <span class="site-state-item-count">11</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -385,6 +399,10 @@
 
 
       </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
 
     </div>
   </aside>

@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+<link rel="stylesheet" href="//fonts.googleapis.com/css?family=Monda:300,300italic,400,400italic,700,700italic|Sans Serif:300,300italic,400,400italic,700,700italic|Serif:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Fira Code:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext">
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
+  </script>
+
+  <meta name="description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.   参考资料: B+ Tree Visualization B+树和B树的区别  背景这个实验的目标是为数据库的数据实现索引(table index), 类似于字典的目录. 通过索引, 可以快速的找到需要的数据, 而不需要逐个遍历. 常用的索引结构有两种: 哈希表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CMU DBMS实验笔记(2) B+Tree Index">
+<meta property="og:url" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/index.html">
+<meta property="og:site_name" content="cyl&#39;s blog">
+<meta property="og:description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.   参考资料: B+ Tree Visualization B+树和B树的区别  背景这个实验的目标是为数据库的数据实现索引(table index), 类似于字典的目录. 通过索引, 可以快速的找到需要的数据, 而不需要逐个遍历. 常用的索引结构有两种: 哈希表">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811092800508.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811093008003.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811105658209.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811111043846.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811142031147.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811171249003.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811172713733.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811174003725.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811174055679.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811174237256.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811175113910.png">
+<meta property="og:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811174936423.png">
+<meta property="article:published_time" content="2021-08-04T16:00:00.000Z">
+<meta property="article:modified_time" content="2021-08-11T10:16:48.941Z">
+<meta property="article:author" content="yl.chen">
+<meta property="article:tag" content="modern C++">
+<meta property="article:tag" content="数据库">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://ysln.github.io/2021/08/05/CMU-database-lab-2/image-20210811092800508.png">
+
+<link rel="canonical" href="https://ysln.github.io/2021/08/05/CMU-database-lab-2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'en'
+  };
+</script>
+
+  <title>CMU DBMS实验笔记(2) B+Tree Index | cyl's blog</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">cyl's blog</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>Home</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i>Tags</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i>Categories</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>Archives</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/08/05/CMU-database-lab-2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          CMU DBMS实验笔记(2) B+Tree Index
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-08-05 00:00:00" itemprop="dateCreated datePublished" datetime="2021-08-05T00:00:00+08:00">2021-08-05</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-08-11 18:16:48" itemprop="dateModified" datetime="2021-08-11T18:16:48+08:00">2021-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/CMU-DBMS-Lab/" itemprop="url" rel="index"><span itemprop="name">CMU DBMS Lab</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文是在完成 <strong><a target="_blank" rel="noopener" href="https://15445.courses.cs.cmu.edu/fall2020/">卡耐基梅隆大学 数据库实验</a></strong> 过程中的一些记录.</p>
+</blockquote>
+<blockquote>
+<p>如果遇到问题, 可以去 <a href="https://link.zhihu.com/?target=https://discord.gg/YF7dMCg">Discord channel</a> 寻求帮助.</p>
+</blockquote>
+<blockquote>
+<p>参考资料:</p>
+<p><a target="_blank" rel="noopener" href="https://www.cs.usfca.edu/~galles/visualization/BPlusTree.html">B+ Tree Visualization</a></p>
+<p><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/ace3cd6526c4">B+树和B树的区别</a></p>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>这个实验的目标是为数据库的数据实现<strong>索引(table index)</strong>, 类似于字典的目录. 通过索引, 可以快速的找到需要的数据, 而不需要逐个遍历.</p>
+<p>常用的索引结构有两种: 哈希表和B+树. 这个实验要求实现B+树索引结构, 包括基本的B+树操作: 添加元素, 删除元素, 查找元素, 顺序遍历元素. 进阶的操作: <strong>B+树的并发控制</strong>.</p>
+<p><em><span id="more"></span></em></p>
+<p>B/B+树是一种M叉的自平衡(self-balancing)树结构. B树的结构示意图如下:</p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811092800508.png" alt="image-20210811092800508" style="zoom: 80%;">
+
+<p>B树有以下特点:</p>
+<ul>
+<li>所有键值分布在整颗树中(键值和具体的数据都存储在每个节点里).</li>
+<li>搜索有可能在非叶子结点结束.</li>
+<li>对于键值唯一(unique key)的索引结构, 任何一个关键字只出现在一个结点中.</li>
+</ul>
+<p>B+树的结构示意图如下:</p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811093008003.png" alt="image-20210811093008003" style="zoom:80%;">
+
+<p>B+树的特点如下(也是和B树的区别):</p>
+<ul>
+<li>有叶子节点(leaf node)和内部节点(inner node). 数据只存储在叶子节点, 内部节点只存储键值, 不存储实际的数据. 因此B+树相比于B树, 一页internal page可以存储更多的键值.</li>
+<li>叶子节点之间有指针(sibling pointers)相连, 构成链表结构, 可以做顺序的遍历.</li>
+</ul>
+<p>B+树是一种平衡树, 对于一个M-way的B+树(上图所示为4-way B+树), 它需要满足以下特性:</p>
+<ul>
+<li><p>若内部节点(inner node)存储的键值的数量为<code>K</code>, 则它有<code>K + 1</code>个非空(non-null)的孩子结点(可以是叶子节点, 也可以是内部节点). </p>
+</li>
+<li><p>非根节点的内部节点(inner node)存储的键值的数量<code>K</code>需要满足: <code>max(2, M/2) ≤ K ≤ M</code>.</p>
+</li>
+<li><p>非根节点的叶子节点(leaf node)存储的键值的数量<code>K</code>需要满足: <code>M/2 ≤ K &lt; M</code>.</p>
+</li>
+</ul>
+<blockquote>
+<p>上面关于<code>K</code>的两个不等式是我做完实验之后总结的.</p>
+</blockquote>
+<h2 id="实验内容"><a href="#实验内容" class="headerlink" title="实验内容"></a>实验内容</h2><h3 id="B-Tree-Point-Search"><a href="#B-Tree-Point-Search" class="headerlink" title="B+ Tree Point Search"></a>B+ Tree Point Search</h3><p>从根节点开始, 找到目标所在的leaf node, 然后在leaf node内搜索想要的数据. 注意, 无论是inner node还是leaf node内的查找, 都可以使用二分查找.</p>
+<h3 id="B-Tree-Insertion"><a href="#B-Tree-Insertion" class="headerlink" title="B+ Tree Insertion"></a>B+ Tree Insertion</h3><p>找到相应的leaf node:</p>
+<ul>
+<li>如果B+树是空的, 调用<code>StartNewTree</code>创建一棵新的B+树, 注意更新<code>root_page_id_</code>, 并调用<code>UpdateRootPageId</code>.</li>
+<li>否则, 调用<code>InsertIntoLeaf</code>, 往该leaf node插入数据, 注意需要保持数据的有序. 如果<strong>插入后</strong>当前leaf node已满, 需要实施split.</li>
+</ul>
+<h3 id="B-Tree-Split"><a href="#B-Tree-Split" class="headerlink" title="B+ Tree Split"></a>B+ Tree Split</h3><img src="/2021/08/05/CMU-database-lab-2/image-20210811105658209.png" alt="image-20210811105658209" style="zoom:67%;">
+
+<p>如果insert 3, 则page id为5的leaf node此时的key的数量达到最大值3, 将会进行分裂:</p>
+<ol>
+<li><p>取得middle key, 也就是2(index为<code>max_size / 2</code>处的key).</p>
+</li>
+<li><p>创建一个新的node, 把一半的key移动到新的node.</p>
+</li>
+<li><p>把<code>&lt;middle key, new leaf node’s page id&gt;</code>插入到父节点(也就是page id为3的inner node)中. 假设新node的page id为9, 则插入的记录为<code>&lt;2, 9&gt;</code>.</p>
+</li>
+</ol>
+<p>由于父节点<strong>插入前</strong>没有满, 或者说插入后父节点不会发生溢出, 所以父节点不需要分裂. 插入后如图所示:</p>
+<p><img src="/2021/08/05/CMU-database-lab-2/image-20210811111043846.png" alt="image-20210811111043846"></p>
+<p>如果此时再insert 9, 其将会插入到page id为2的leaf node, 插入后key数量已满, 将会发生split, 步骤1, 2和上面一样. 步骤3有区别, 父节点(即page id为6的node)在<strong>插入前</strong>就已经满了, 或者说插入后父节点会发生溢出, 因此父节点也需要split, 需要递归处理.</p>
+<blockquote>
+<p><strong>虽然inner node的index为0处的key是无效的, 但是在split和merge时, 可以利用它来存储一些辅助信息.</strong></p>
+<p><strong>由于父节点也可能发生split, 因此需要小心处理新创建的leaf node的父节点, 即应该把<code>&lt;middle key, new leaf node’s page id&gt;</code>插入到哪里, 是原先的父节点, 还是父节点分裂后产生的新节点.</strong></p>
+</blockquote>
+<p>插入之后如图所示:</p>
+<p><img src="/2021/08/05/CMU-database-lab-2/image-20210811142031147.png" alt="image-20210811142031147"></p>
+<h3 id="B-Tree-Deletion"><a href="#B-Tree-Deletion" class="headerlink" title="B+ Tree Deletion"></a>B+ Tree Deletion</h3><p>步骤如下:</p>
+<ol>
+<li>找到需要删除的数据所在的leaf node.</li>
+<li>删除数据, 注意保持数据的有序.</li>
+<li>如果此时leaf node的key数量小于最小值, 则<ul>
+<li>redistribute. 找到和该leaf node同属一个父节点的sibling node, 尝试从他们那里“偷”一个数据.</li>
+<li>如果无法redistribute, 则coalesce, 把该leaf node和它的其中一个sibling node合并. 并且在父节点中删除关于该节点的信息, <strong>可能需要递归处理</strong>.</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<p>当删除完整个B+树的最后一个元素, 该怎么办?</p>
+<p>我的做法是, 保持<code>root_page_id_</code>不变, 不删除root node, 下次插入时直接插入数据到这个node, 也就是说不用再调用<code>StartNewTree</code>.</p>
+<p>当根节点只有唯一的一个child node, 怎么办?</p>
+<p>我的做法是, 让该child node成为新的root node, 删除原先的root node.</p>
+</blockquote>
+<h3 id="B-Tree并发控制"><a href="#B-Tree并发控制" class="headerlink" title="B+ Tree并发控制"></a>B+ Tree并发控制</h3><p>无论是查找, 还是插入, 删除元素, 首先都需要确定要操作的leaf node. 为了保证并发时B+树的正确性, 需要遵循如下的加锁顺序:</p>
+<ol>
+<li>获取节点的锁.</li>
+<li>获取该节点的子节点的锁.</li>
+<li>如果该子节点是<strong>安全的</strong>, 释放该子节点往上已经获取的所有锁.</li>
+</ol>
+<p>某个节点是否<strong>安全</strong>的判断依据:</p>
+<ul>
+<li>对于查找操作(即只读), 永远是安全的.</li>
+<li> 对于插入操作:</li>
+<li>如果该节点是leaf node, 满足: <code>K &lt; max_size - 1</code>.</li>
+<li>如果该节点是inner node, 满足: <code>K &lt; max_size</code>.</li>
+<li>对于删除操作, 满足: <code>K &gt; min_size</code>.</li>
+</ul>
+<p>有以下两种加锁算法:</p>
+<ul>
+<li>pessimistic algorithm(悲观加锁算法). 该算法假设每次insert/delete都会引发节点的split/redistribute/coalesce, 因此遵循上述的加锁顺序, 每个节点都加<strong>写锁</strong>.</li>
+<li>optimistic algorithm(乐观加锁算法). 该算法假设只有少数的insert/delete会引发节点的split/redistribute/coalesce, 大部分情况下都只需要修改一个leaf node. 因此遵循上述的加锁顺序, 并且认为每个节点都是安全的, <strong>所有的inner node都加读锁, 只在最后的leaf node上加写锁</strong>. 如果该leaf node当真是安全的, 则直接操作. 如果该节点是不安全的, 即可能引发节点的split/redistribute/coalesce, 则按照pessimistic algorithm重新来一遍.</li>
+</ul>
+<p>对于pessimistic algorithm, 它需要在每个节点上先加写锁, 包括根节点. 而所有的操作(search/insert/delete), 第一件事就是访问根节点. 因此在高并发的情形下, 对根节点加写锁是一个瓶颈.</p>
+<p>而optimistic algorithm首先认为所有节点都是安全的, 因此只加读锁. 然而一旦猜错, 代价是十分高昂的, 需要重新做一次pessimistic algorithm, 相当于第一遍的遍历是无用功.</p>
+<p>在实际场景下, optimistic algorithm可以工作的很好. 因为一个page通常很大, 可以存储很多的key&amp;value pairs.</p>
+<h4 id="Concurrent-Insert"><a href="#Concurrent-Insert" class="headerlink" title="Concurrent Insert"></a>Concurrent Insert</h4><p>多线程并发插入时需要注意一种情况: 如果此时的B+树是空的, 也就是说<code>root_page_id_</code>是非法的. 这个时候需要保证<code>StartNewTree</code>只会被调用一次.</p>
+<h4 id="root-page-id"><a href="#root-page-id" class="headerlink" title="root_page_id_"></a><code>root_page_id_</code></h4><p><code>root_page_id_</code>在以下情形下会发生改变:</p>
+<ul>
+<li><code>StartNewTree</code>创建一棵新的B+树.</li>
+<li>insert时造成原先根节点分裂.</li>
+<li>delete时造成原先根节点只剩一个子节点, 需要把该子节点变成新的根节点.</li>
+</ul>
+<p>因此在fetch root page时要特别注意<code>root_page_id_</code>是否发生了改变:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">INDEX_TEMPLATE_ARGUMENTS</span></span><br><span class="line"><span class="function">Page *<span class="title">BPLUSTREE_TYPE::GetRootPage</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  Page *page = <span class="literal">nullptr</span>;</span><br><span class="line">  <span class="keyword">page_id_t</span> old_root_page_id = root_page_id_;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> count = <span class="number">1</span>;; old_root_page_id = root_page_id_, ++count) &#123;</span><br><span class="line">    page = buffer_pool_manager_-&gt;<span class="built_in">FetchPage</span>(old_root_page_id);</span><br><span class="line">    <span class="built_in">assert</span>(page != <span class="literal">nullptr</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取读锁或者写锁...</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (page-&gt;<span class="built_in">GetPageId</span>() == root_page_id_) &#123;</span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 释放读锁或者写锁...</span></span><br><span class="line">      </span><br><span class="line">    buffer_pool_manager_-&gt;<span class="built_in">UnpinPage</span>(page-&gt;<span class="built_in">GetPageId</span>(), <span class="literal">false</span>);</span><br><span class="line">    <span class="comment">// LOG_DEBUG(&quot;Somewhere change root_page_id_, retry. count = %d&quot;, count);</span></span><br><span class="line">    <span class="built_in">assert</span>(count &lt; <span class="number">100</span>);  <span class="comment">// 预防死循环</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="built_in">assert</span>(page-&gt;<span class="built_in">GetPageId</span>() == root_page_id_);</span><br><span class="line">  <span class="keyword">return</span> page;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="对最后的leaf-node加写锁"><a href="#对最后的leaf-node加写锁" class="headerlink" title="对最后的leaf node加写锁"></a>对最后的leaf node加写锁</h4><p>在optimistic algorithm中, 第一遍需要对inner node加读锁, 只对最后的leaf node加写锁. 然而, 想要判断一个node是leaf node还是inner node, 需要先对该node对应的page加锁. 我的做法是, <strong>先加读锁, 如果该node是leaf node, 则把读锁换成写锁</strong>. </p>
+<p>但是, <code>ReaderWriterLatch</code>只有4个API: <code>WLock</code>, <code>WUnlock</code>, <code>RLock</code>和<code>RUnlock</code>. 它没有提供一个API可以把已经获得的读锁提升成写锁. 我本来尝试自己实现一个这样的API, 但是有点复杂, 失败了. 因此, 我的做法是: <strong>先调用<code>RUnlock</code>, 再调用<code>WLock</code></strong>. 所以, <strong>在调用<code>RUnlock</code>时, 一定要保证此时还持有父节点的锁</strong>.</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* 省略了一些必要的安全检查 */</span></span><br><span class="line"><span class="function">Page *<span class="title">FindLeafPage</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  Page *parent = <span class="literal">nullptr</span>;</span><br><span class="line">  Page *page = <span class="built_in">GetRootPage</span>();  <span class="comment">// fetch root page, 此时root page已经被加上了(读)锁.</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    BPlusTreePage *btree_page = <span class="keyword">reinterpret_cast</span>&lt;BPlusTreePage *&gt;(page-&gt;<span class="built_in">GetData</span>());</span><br><span class="line">    <span class="keyword">if</span> (btree_page-&gt;<span class="built_in">IsLeafPage</span>()) &#123;</span><br><span class="line">      page-&gt;<span class="built_in">RUnlatch</span>();  <span class="comment">// A</span></span><br><span class="line">      page-&gt;<span class="built_in">WLatch</span>();    <span class="comment">// B</span></span><br><span class="line">      <span class="keyword">break</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (parent != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">      parent-&gt;<span class="built_in">RUnlatch</span>();</span><br><span class="line">      buffer_pool_manager_-&gt;<span class="built_in">UnpinPage</span>(parent-&gt;<span class="built_in">GetPageId</span>(), <span class="literal">false</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    parent = page;</span><br><span class="line"></span><br><span class="line">    InternalPage *internal_page = <span class="keyword">reinterpret_cast</span>&lt;InternalPage *&gt;(btree_page);</span><br><span class="line">    <span class="keyword">page_id_t</span> next = internal_page-&gt;<span class="built_in">Lookup</span>(key, comparator_);</span><br><span class="line"></span><br><span class="line">    page = buffer_pool_manager_-&gt;<span class="built_in">FetchPage</span>(next);</span><br><span class="line">    page-&gt;<span class="built_in">RLatch</span>();</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (parent != <span class="literal">nullptr</span>) &#123;</span><br><span class="line">    parent-&gt;<span class="built_in">RUnlatch</span>();</span><br><span class="line">    buffer_pool_manager_-&gt;<span class="built_in">UnpinPage</span>(parent-&gt;<span class="built_in">GetPageId</span>(), <span class="literal">false</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> page;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然而, 又出现了一个新的问题: <strong>如果根节点恰好又是leaf node, 该怎么办?</strong></p>
+<p><strong>根节点是没有父节点的</strong>, 所以上述这种做法就违背了前面提到的加锁原则. 考虑如下的情形: 根节点就是leaf node, 并且此时已经有两个key, 再插入一个key就会发生分裂.</p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811171249003.png" alt="image-20210811171249003" style="zoom:80%;">
+
+<p>此时, 有两个线程到来: T1想要插入3, T2想要插入5. <strong>注意此时的<code>root_page_id_ == 1</code></strong>.</p>
+<p>假设T1先运行到上面代码的A处, 已经解锁了root page, 正要运行B时, 发生调度, 线程T2开始运行. </p>
+<p>假设线程T2正常运行, 插入5, <strong>原先的根节点分裂, 创建新的root page, 此时<code>root_page_id_</code>发生改变, 变为3:</strong></p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811172713733.png" alt="image-20210811172713733" style="zoom:80%;">
+
+<p>假设此时线程T1接着运行到代码B, 即对root page加写锁. 但是, 在解锁(A)和加锁(B)之间, root page已经发生了改变, 此时的root page为page #3, 然而线程T1并不知道, 它以为root page还是原先那个, 即page #1. 于是线程T1在page #1对应的node中插入了3. 但是B+树已经有key为3的node(即page #2), 于是整个B+树变得混乱.</p>
+<p>可以对上面的代码进行如下的修改来修复上述的问题:</p>
+<figure class="highlight c++"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (btree_page-&gt;<span class="built_in">IsLeafPage</span>()) &#123;</span><br><span class="line">  <span class="keyword">bool</span> is_root_page = btree_page-&gt;<span class="built_in">IsRootPage</span>();</span><br><span class="line"></span><br><span class="line">  page-&gt;<span class="built_in">RUnlatch</span>();</span><br><span class="line">  page-&gt;<span class="built_in">WLatch</span>();</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (is_root_page != btree_page-&gt;<span class="built_in">IsRootPage</span>()) &#123;  <span class="comment">// 如果`root_page_id_`已经变了, 这本次操作视为失败, 重新开始.</span></span><br><span class="line">    page-&gt;<span class="built_in">WUnlatch</span>();</span><br><span class="line">    page = <span class="literal">nullptr</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">break</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="“通关”截图"><a href="#“通关”截图" class="headerlink" title="“通关”截图"></a>“通关”截图</h3><img src="/2021/08/05/CMU-database-lab-2/image-20210811174003725.png" alt="image-20210811174003725" style="zoom:80%;">
+
+<p>关于B+树的测试都通过了:</p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811174055679.png" alt="image-20210811174055679" style="zoom: 67%;">
+
+<p>但是唯独一个关于buffer pool manager的测试没有通过:</p>
+<img src="/2021/08/05/CMU-database-lab-2/image-20210811174237256.png" alt="image-20210811174237256" style="zoom: 80%;">
+
+<p>然而buffer pool manager的测试明明已经通过了…</p>
+<p>Discord上也有人反馈类似的问题, 但是他们解决该问题的方法又非常玄学:</p>
+<p><img src="/2021/08/05/CMU-database-lab-2/image-20210811175113910.png" alt="image-20210811175113910"></p>
+<p><img src="/2021/08/05/CMU-database-lab-2/image-20210811174936423.png" alt="image-20210811174936423"></p>
+<p>我尝试了使用<code>std::move</code>和<code>std::move_forward</code>代替<code>for</code>循环拷贝, 但是没有用.</p>
+<p><code>BPlusTreeInternalPage</code>中有两个方法很奇怪: <code>int ValueIndex(const ValueType &amp;value)</code>和<code>int InsertNodeAfter(const ValueType &amp;old_value, const KeyType &amp;new_key, const ValueType &amp;new_value)</code>. 这两个方法都没有<code>KeyComparator</code>参数, 因此无法进行二分查找, 只能使用线性查找. 我在B+树的实现中没有使用这两个方法, 并且把其他地方的查找都换成了二分查找, 但是仍然没有用…</p>
+<p>TODO: pass <strong>test_memory_safety</strong></p>
+
+    </div>
+
+    
+    
+    
+        
+
+<div>
+<ul class="post-copyright">
+  <li class="post-copyright-author">
+    <strong>Post author:  </strong>yl.chen
+  </li>
+  <li class="post-copyright-link">
+    <strong>Post link: </strong>
+    <a href="https://ysln.github.io/2021/08/05/CMU-database-lab-2/" title="CMU DBMS实验笔记(2) B+Tree Index">https://ysln.github.io/2021/08/05/CMU-database-lab-2/</a>
+  </li>
+  <li class="post-copyright-license">
+    <strong>Copyright Notice:  </strong>All articles in this blog are licensed under <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i>BY-NC-SA</a> unless stating additionally.
+  </li>
+</ul>
+</div>
+
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/modern-C/" rel="tag"># modern C++</a>
+              <a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" rel="tag"># 数据库</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/07/11/CMU-database-lab-1/" rel="prev" title="CMU DBMS实验笔记(0/1) Buffer Pool Manager">
+      <i class="fa fa-chevron-left"></i> CMU DBMS实验笔记(0/1) Buffer Pool Manager
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%8C%E6%99%AF"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E9%AA%8C%E5%86%85%E5%AE%B9"><span class="nav-number">2.</span> <span class="nav-text">实验内容</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Tree-Point-Search"><span class="nav-number">2.1.</span> <span class="nav-text">B+ Tree Point Search</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Tree-Insertion"><span class="nav-number">2.2.</span> <span class="nav-text">B+ Tree Insertion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Tree-Split"><span class="nav-number">2.3.</span> <span class="nav-text">B+ Tree Split</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Tree-Deletion"><span class="nav-number">2.4.</span> <span class="nav-text">B+ Tree Deletion</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-Tree%E5%B9%B6%E5%8F%91%E6%8E%A7%E5%88%B6"><span class="nav-number">2.5.</span> <span class="nav-text">B+ Tree并发控制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Concurrent-Insert"><span class="nav-number">2.5.1.</span> <span class="nav-text">Concurrent Insert</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#root-page-id"><span class="nav-number">2.5.2.</span> <span class="nav-text">root_page_id_</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9%E6%9C%80%E5%90%8E%E7%9A%84leaf-node%E5%8A%A0%E5%86%99%E9%94%81"><span class="nav-number">2.5.3.</span> <span class="nav-text">对最后的leaf node加写锁</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%80%9C%E9%80%9A%E5%85%B3%E2%80%9D%E6%88%AA%E5%9B%BE"><span class="nav-number">2.6.</span> <span class="nav-text">“通关”截图</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">yl.chen</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">11</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">categories</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">tags</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YsLn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YsLn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+      </div>
+        <div class="back-to-top motion-element">
+          <i class="fa fa-arrow-up"></i>
+          <span>0%</span>
+        </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">yl.chen</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a>
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
