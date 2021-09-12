@@ -182,7 +182,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-08-11 22:34:43" itemprop="dateModified" datetime="2021-08-11T22:34:43+08:00">2021-08-11</time>
+                <time title="Modified: 2021-09-11 11:07:00" itemprop="dateModified" datetime="2021-09-11T11:07:00+08:00">2021-09-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -210,6 +210,7 @@
 </blockquote>
 <blockquote>
 <p>如果遇到问题, 可以去 <a href="https://link.zhihu.com/?target=https://discord.gg/YF7dMCg">Discord channel</a> 寻求帮助.</p>
+<p>另外, 知乎大佬<a target="_blank" rel="noopener" href="https://www.zhihu.com/people/hu-jin-ming-31">胡津铭</a>组织了一个<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/366484273">关于本课程的学习交流群</a>(QQ): 878405016. 并且还有<a target="_blank" rel="noopener" href="https://piazza.com/class/knq3bv3ze0s1s0">piazza课程主页</a>, access code: 15445. 感谢各位大佬的帮助!</p>
 </blockquote>
 <blockquote>
 <p>参考资料:</p>
@@ -276,7 +277,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-08-11 18:17:18" itemprop="dateModified" datetime="2021-08-11T18:17:18+08:00">2021-08-11</time>
+                <time title="Modified: 2021-09-11 11:09:44" itemprop="dateModified" datetime="2021-09-11T11:09:44+08:00">2021-09-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -304,6 +305,7 @@
 </blockquote>
 <blockquote>
 <p>如果遇到问题, 可以去 <a href="https://link.zhihu.com/?target=https://discord.gg/YF7dMCg">Discord channel</a> 寻求帮助.</p>
+<p>另外, 知乎大佬<a target="_blank" rel="noopener" href="https://www.zhihu.com/people/hu-jin-ming-31">胡津铭</a>组织了一个<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/366484273">关于本课程的学习交流群</a>(QQ): 878405016. 并且还有<a target="_blank" rel="noopener" href="https://piazza.com/class/knq3bv3ze0s1s0">piazza课程主页</a>, access code: 15445. 感谢各位大佬的帮助!</p>
 </blockquote>
 <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 <a target="_blank" rel="noopener" href="https://15445.courses.cs.cmu.edu/fall2020/syllabus.html">SYLLABUS</a>. </p>
 <img src="/2021/07/11/CMU-database-lab-1/image-20210704122337806.png" alt="image-20210704122337806" style="zoom: 50%;">
@@ -800,6 +802,100 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
+    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/05/09/threads-on-multi-CPU/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="yl.chen">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="cyl's blog">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/05/09/threads-on-multi-CPU/" class="post-title-link" itemprop="url">硬件线程(hart)&软件线程&CPU</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">Posted on</span>
+
+              <time title="Created: 2021-05-09 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-09T00:00:00+08:00">2021-05-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2021-08-11 18:19:04" itemprop="dateModified" datetime="2021-08-11T18:19:04+08:00">2021-08-11</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">In</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/NJU-OS-Lab/" itemprop="url" rel="index"><span itemprop="name">NJU OS Lab</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p><strong>参考资料</strong>:</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://jyywiki.cn/OS/2021/labs/L2">L2: 多处理器内核上的线程管理 (kmt) </a></li>
+</ul>
+<p>本文是在完成NJU操作系统实验过程中的一些记录.</p>
+</blockquote>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>“多处理器内核上的线程管理 (kmt)”这个实验并不是很难, 前提是认真听了<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1HN41197Ko?p=10">jyy的课</a>, 以及仔细阅读了jyy的实验指南. 由于没有认真听课, 所以做实验的时候踩了很多坑, 各种各样的并发bug, 虚拟机各种神秘重启.</p>
+<p>这个实验和NJU”计算机系统基础”实验<a target="_blank" rel="noopener" href="https://nju-projectn.github.io/ics-pa-gitbook/ics2020/3.2.html">PA3</a>&amp;<a target="_blank" rel="noopener" href="https://nju-projectn.github.io/ics-pa-gitbook/ics2020/4.1.html">PA4</a><del>有点像</del>有点关联, 但两者侧重点不同. </p>
+<ul>
+<li>PA3&amp;PA4的侧重点是发生中断/异常时<code>context</code>的保存与恢复, 以及怎样创建内核线程(包括context的创建与放置, 如何跳转执行).  而且实验模拟的硬件是单CPU的.</li>
+<li>这个实验中context的store/restore已经实现好了, 侧重点是多处理器内核上的线程管理, 关键词: <strong>多CPU</strong>, <strong>线程调度</strong>. </li>
+</ul>
+<p><em></em></p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/05/09/threads-on-multi-CPU/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
     <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/05/09/stack-probe/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -877,100 +973,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2021/05/09/stack-probe/#more" rel="contents">
-                Read more &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="en">
-    <link itemprop="mainEntityOfPage" href="https://ysln.github.io/2021/05/09/threads-on-multi-CPU/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="yl.chen">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="cyl's blog">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/05/09/threads-on-multi-CPU/" class="post-title-link" itemprop="url">硬件线程(hart)&软件线程&CPU</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              <span class="post-meta-item-text">Posted on</span>
-
-              <time title="Created: 2021-05-09 00:00:00" itemprop="dateCreated datePublished" datetime="2021-05-09T00:00:00+08:00">2021-05-09</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-08-11 18:19:04" itemprop="dateModified" datetime="2021-08-11T18:19:04+08:00">2021-08-11</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              <span class="post-meta-item-text">In</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/NJU-OS-Lab/" itemprop="url" rel="index"><span itemprop="name">NJU OS Lab</span></a>
-                </span>
-            </span>
-
-          
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p><strong>参考资料</strong>:</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="http://jyywiki.cn/OS/2021/labs/L2">L2: 多处理器内核上的线程管理 (kmt) </a></li>
-</ul>
-<p>本文是在完成NJU操作系统实验过程中的一些记录.</p>
-</blockquote>
-<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>“多处理器内核上的线程管理 (kmt)”这个实验并不是很难, 前提是认真听了<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1HN41197Ko?p=10">jyy的课</a>, 以及仔细阅读了jyy的实验指南. 由于没有认真听课, 所以做实验的时候踩了很多坑, 各种各样的并发bug, 虚拟机各种神秘重启.</p>
-<p>这个实验和NJU”计算机系统基础”实验<a target="_blank" rel="noopener" href="https://nju-projectn.github.io/ics-pa-gitbook/ics2020/3.2.html">PA3</a>&amp;<a target="_blank" rel="noopener" href="https://nju-projectn.github.io/ics-pa-gitbook/ics2020/4.1.html">PA4</a><del>有点像</del>有点关联, 但两者侧重点不同. </p>
-<ul>
-<li>PA3&amp;PA4的侧重点是发生中断/异常时<code>context</code>的保存与恢复, 以及怎样创建内核线程(包括context的创建与放置, 如何跳转执行).  而且实验模拟的硬件是单CPU的.</li>
-<li>这个实验中context的store/restore已经实现好了, 侧重点是多处理器内核上的线程管理, 关键词: <strong>多CPU</strong>, <strong>线程调度</strong>. </li>
-</ul>
-<p><em></em></p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/05/09/threads-on-multi-CPU/#more" rel="contents">
                 Read more &raquo;
               </a>
             </div>

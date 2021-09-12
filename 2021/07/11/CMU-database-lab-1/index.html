@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"ysln.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":false,"style":"mac"},"back2top":{"enable":true,"sidebar":true,"scrollpercent":true},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":false,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}};
   </script>
 
-  <meta name="description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.  背景这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 SYLLABUS.">
+  <meta name="description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助. 另外, 知乎大佬胡津铭组织了一个关于本课程的学习交流群(QQ): 878405016. 并且还有piazza课程主页, access code: 15445. 感谢各位大佬的帮助!  背景这门课是关于数据库管理系统(DataBase Management Syst">
 <meta property="og:type" content="article">
 <meta property="og:title" content="CMU DBMS实验笔记(0&#x2F;1) Buffer Pool Manager">
 <meta property="og:url" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/index.html">
 <meta property="og:site_name" content="cyl&#39;s blog">
-<meta property="og:description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助.  背景这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 SYLLABUS.">
+<meta property="og:description" content="本文是在完成 卡耐基梅隆大学 数据库实验 过程中的一些记录.   如果遇到问题, 可以去 Discord channel 寻求帮助. 另外, 知乎大佬胡津铭组织了一个关于本课程的学习交流群(QQ): 878405016. 并且还有piazza课程主页, access code: 15445. 感谢各位大佬的帮助!  背景这门课是关于数据库管理系统(DataBase Management Syst">
 <meta property="og:locale" content="en_US">
 <meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210704122337806.png">
 <meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711102154382.png">
@@ -43,7 +43,7 @@
 <meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711000758745.png">
 <meta property="og:image" content="https://ysln.github.io/2021/07/11/CMU-database-lab-1/image-20210711001323309.png">
 <meta property="article:published_time" content="2021-07-10T16:00:00.000Z">
-<meta property="article:modified_time" content="2021-08-11T10:17:18.144Z">
+<meta property="article:modified_time" content="2021-09-11T03:09:44.694Z">
 <meta property="article:author" content="yl.chen">
 <meta property="article:tag" content="modern C++">
 <meta property="article:tag" content="数据库">
@@ -204,7 +204,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">Edited on</span>
-                <time title="Modified: 2021-08-11 18:17:18" itemprop="dateModified" datetime="2021-08-11T18:17:18+08:00">2021-08-11</time>
+                <time title="Modified: 2021-09-11 11:09:44" itemprop="dateModified" datetime="2021-09-11T11:09:44+08:00">2021-09-11</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -232,6 +232,7 @@
 </blockquote>
 <blockquote>
 <p>如果遇到问题, 可以去 <a href="https://link.zhihu.com/?target=https://discord.gg/YF7dMCg">Discord channel</a> 寻求帮助.</p>
+<p>另外, 知乎大佬<a target="_blank" rel="noopener" href="https://www.zhihu.com/people/hu-jin-ming-31">胡津铭</a>组织了一个<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/366484273">关于本课程的学习交流群</a>(QQ): 878405016. 并且还有<a target="_blank" rel="noopener" href="https://piazza.com/class/knq3bv3ze0s1s0">piazza课程主页</a>, access code: 15445. 感谢各位大佬的帮助!</p>
 </blockquote>
 <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>这门课是关于数据库管理系统(DataBase Management Systems, DBMS)的设计与实现. 教学大纲参阅 <a target="_blank" rel="noopener" href="https://15445.courses.cs.cmu.edu/fall2020/syllabus.html">SYLLABUS</a>. </p>
 <img src="/2021/07/11/CMU-database-lab-1/image-20210704122337806.png" alt="image-20210704122337806" style="zoom: 50%;">
@@ -375,7 +376,7 @@
 <p><strong>valgrind不能用于sanitized的程序(如Asan), 因此编译时需要去掉<code>-fsanitize=address</code>选项</strong>. 程序所依赖的动态链接库也需要按照这种方法处理.</p>
 <p>参考: <a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/42079091/valgrind-gcc-6-2-0-and-fsanitize-address">valgrind, gcc 6.2.0 and “-fsanitize=address” - Stack Overflow</a></p>
 </blockquote>
-<p>使用callgrind来进行profiling时, 需要注意如果程序是多线程的, 需要开启<code>--separate-threads=yes</code>:</p>
+<p>使用callgrind来进行profiling时, 需要注意如果程序是多线程的, <del>需要</del> 可以开启<code>--separate-threads=yes</code>:</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">$</span><span class="bash"> valgrind --tool=callgrind --separate-threads=yes ./a.out</span></span><br></pre></td></tr></table></figure>
 
 <p>valgrind中运行的程序比正常运行的要慢很多, 运行结束后会生成<code>callgrind.out.xxx-yy</code>文件(<code>xxx</code>表示进程号, <code>yy</code>表示线程号).</p>
